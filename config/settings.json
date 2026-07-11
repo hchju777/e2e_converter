@@ -1,0 +1,18 @@
+{
+    "spec_path": "config/metric_spec.csv",
+    "sav_dir": "db",
+    "sav_filename": "(0709)피부과(6차)_v2.0.SAV",
+    "output_dir": "results",
+    "output_filename": "results_26년6차.csv",
+    "result_column": "26년 6차",
+    "dashboard_banners": [
+        {"name": "전체"},
+        {"name": "수도권", "column": "Area", "values": [1]},
+        {"name": "지방", "column": "Area", "values": [2, 3, 4, 5, 6]},
+        {"name": "T1", "column": "UCB_Tier", "values": [1]},
+        {"name": "T2", "column": "UCB_Tier", "values": [2]},
+        {"name": "T3", "column": "UCB_Tier", "values": [3, 99]}
+    ],
+    "dashboard_template": "db/PsO_dashboard_v4 (2).html",
+    "dashboard_output": "results/PsO_dashboard_26년6차.html"
+}

@@ -1,0 +1,13 @@
+__pycache__
+.venv
+db
+results
+build/
+release/
+logs/
+*.log
+*.pyc
+*.pyo
+.DS_Store
+.env
+.vscode/settings.json

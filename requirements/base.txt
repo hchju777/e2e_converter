@@ -1,0 +1,6 @@
+pandas
+pyreadstat
+openpyxl
+reportlab
+python-pptx
+Pillow

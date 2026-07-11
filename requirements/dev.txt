@@ -1,0 +1,5 @@
+-r base.txt
+pyinstaller
+pytest
+black
+flake8

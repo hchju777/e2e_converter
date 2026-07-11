@@ -1,0 +1,330 @@
+﻿구분,항목,문항,SAV 변수,계산,배너조건
+전체,응답자의 수,응답자의 수,PID,Count,전체
+전체,PsO 환자 규모 - 환자수 합계,최근 한 달 총 환자 수,SQ4,Sum,전체
+전체,PsO 환자 규모 - 환자수 합계,최근 한 달 건선 only 환자 수,SQ5_1,Sum,전체
+전체,PsO 환자 규모 - 환자수 합계,최근 한 달 건성성 관절염 동반 건선 환자 수,SQ5_2,Sum,전체
+전체,PsO 환자 규모 - 환자수 합계,최근 한 달 건선 환자 수,SQ5_1 + SQ5_2,Sum,전체
+전체,PsO 환자 규모 - 환자수 합계,약물치료를 받은 건선 환자 수,Q1,Sum,전체
+전체,PsO 환자 규모 - 환자수 합계,약물치료를 받은 건선 환자 % (약물치료 받은 건선 환자 수÷건선 환자 수),Q1/(SQ5_1 + SQ5_2)*100,계산식,전체
+전체,PsO 환자 규모 - 환자수 합계,약물치료를 받은 건선 환자 중 전신치료 환자 수,Q2_1,Sum,전체
+전체,PsO 환자 규모 - 환자수 합계,약물치료를 받은 건선 환자 중 국소치료 환자 수,Q2_2,Sum,전체
+전체,PsO 환자 규모 - 환자수 합계,전신치료를 받은 건선 환자 % (전신치료 받은 건선 환자 수÷건선 환자 수),Q2_1/(SQ5_1 + SQ5_2)*100,계산식,전체
+전체,PsO 환자 규모 - 환자수 합계,전신치료 건선 환자 중 생물학적 제제 처방 환자 수,Q3_1-(Q6_A_11 + Q6_B_11 + Q6_C_11_n2)-(Q6_A_16 + Q6_B_16 + Q6_C_16_n2),Sum,전체
+전체,PsO 환자 규모 - 환자수 합계,전신치료 건선 환자 중 기타 약물 처방 환자 수,Q3_2+(Q6_A_11 + Q6_B_11 + Q6_C_11_n2)-(Q6_A_16 + Q6_B_16 + Q6_C_16_n2),Sum,전체
+전체,PsO 환자 규모 - 환자수 합계,생물학적 제제 미처방 건선 환자 중 보험기준 부합하는 환자 수,Q4_n2+(Q6_A_11 + Q6_B_11 + Q6_C_11_n2)-(Q6_A_16 + Q6_B_16 + Q6_C_16_n2),Sum,전체
+전체,PsO 환자 규모 - 의사 1인 당 평균 환자수 ,최근 한 달 총 환자 수,SQ4,Mean,전체
+전체,PsO 환자 규모 - 의사 1인 당 평균 환자수 ,최근 한 달 건선 only 환자 수,SQ5_1,Mean,전체
+전체,PsO 환자 규모 - 의사 1인 당 평균 환자수 ,최근 한 달 건성성 관절염 동반 건선 환자 수,SQ5_2,Mean,전체
+전체,PsO 환자 규모 - 의사 1인 당 평균 환자수 ,최근 한 달 건선 환자 수,SQ5_1 + SQ5_2,Mean,전체
+전체,PsO 환자 규모 - 의사 1인 당 평균 환자수 ,약물치료를 받은 건선 환자 수,Q1,Mean,전체
+전체,PsO 환자 규모 - 의사 1인 당 평균 환자수 ,약물치료를 받은 건선 환자 % (약물치료 받은 건선 환자 수÷건선 환자 수),Q1/(SQ5_1 + SQ5_2)*100,계산식,전체
+전체,PsO 환자 규모 - 의사 1인 당 평균 환자수 ,약물치료를 받은 건선 환자 중 전신치료 환자 수,Q2_1,Mean,전체
+전체,PsO 환자 규모 - 의사 1인 당 평균 환자수 ,약물치료를 받은 건선 환자 중 국소치료 환자 수,Q2_2,Mean,전체
+전체,PsO 환자 규모 - 의사 1인 당 평균 환자수 ,전신치료를 받은 건선 환자 % (전신치료 받은 건선 환자 수÷건선 환자 수),Q2_1/(SQ5_1 + SQ5_2)*100,계산식,전체
+전체,PsO 환자 규모 - 의사 1인 당 평균 환자수 ,전신치료 건선 환자 중 생물학적 제제 처방 환자 수,Q3_1-(Q6_A_11 + Q6_B_11 + Q6_C_11_n2)-(Q6_A_16 + Q6_B_16 + Q6_C_16_n2),Mean,전체
+전체,PsO 환자 규모 - 의사 1인 당 평균 환자수 ,전신치료 건선 환자 중 기타 약물 처방 환자 수,Q3_2+(Q6_A_11 + Q6_B_11 + Q6_C_11_n2)-(Q6_A_16 + Q6_B_16 + Q6_C_16_n2),Mean,전체
+전체,PsO 환자 규모 - 의사 1인 당 평균 환자수 ,생물학적 제제 미처방 건선 환자 중 보험기준 부합하는 환자 수,Q4_n2+(Q6_A_11 + Q6_B_11 + Q6_C_11_n2)-(Q6_A_16 + Q6_B_16 + Q6_C_16_n2),Mean,전체
+전체,PsO 환자 중증도별 비율 ,약물치료를 받은 건선 환자 수 전체,Q1,Sum,전체
+전체,PsO 환자 중증도별 비율 ,경증(Mild),Q1_A_1_n2,Sum,전체
+전체,PsO 환자 중증도별 비율 ,중등증(Moderate),Q1_A_2_n2,Sum,전체
+전체,PsO 환자 중증도별 비율 ,중증(Severe),Q1_A_3_n2,Sum,전체
+전체,생물학적 제제 처방 비율 ,생물학적 제제 처방 환자 수,Q3_1-(Q6_A_11 + Q6_B_11 + Q6_C_11_n2)-(Q6_A_16 + Q6_B_16 + Q6_C_16_n2) ,SUM,전체
+전체,생물학적 제제 처방 비율 ,1인당 월 평균 생물학적 제제 처방 건선 환자 수,Q3_1-(Q6_A_11 + Q6_B_11 + Q6_C_11_n2)-(Q6_A_16 + Q6_B_16 + Q6_C_16_n2) ,Mean,전체
+전체,생물학적 제제 처방 비율 ,1인당 월 평균 건선 환자 수,SQ5_1 + SQ5_2 ,Mean,전체
+전체,생물학적 제제 처방 비율 ,건선 환자 중 생물학적 제제 처방 비율,[Q3_1-(Q6_A_11 + Q6_B_11 + Q6_C_11_n2)-(Q6_A_16 + Q6_B_16 + Q6_C_16_n2) Mean] / [SQ5_1 + SQ5_2 Mean] *100,계산식,전체
+전체,PsO 환자 타입별 구성 (경구제 포함) - 환자 수,생물학적 제제 처방 환자 수,Q3_1 ,SUM,전체
+전체,PsO 환자 타입별 구성 (경구제 포함)  - 환자 수,Bx Naïve ,Q5_1,SUM,전체
+전체,PsO 환자 타입별 구성 (경구제 포함)  - 환자 수,Bx Switching,Q5_2 ,SUM,전체
+전체,PsO 환자 타입별 구성 (경구제 포함)  - 환자 수,Bx Maintain,Q5_3 ,SUM,전체
+전체,PsO 환자 타입별 구성 - 환자 수,생물학적 제제 처방 환자 수,Q3_1-(Q6_A_11 + Q6_B_11 + Q6_C_11_n2)-(Q6_A_16 + Q6_B_16 + Q6_C_16_n2) ,SUM,전체
+전체,PsO 환자 타입별 구성 - 환자 수,Bx Naïve ,Q5_1 - Q6_A_11 - Q6_A_16,SUM,전체
+전체,PsO 환자 타입별 구성 - 환자 수,Bx Switching,Q5_2 - Q6_B_11 - Q6_B_16,SUM,전체
+전체,PsO 환자 타입별 구성 - 환자 수,Bx Maintain,Q5_3 - Q6_C_11_n2 - Q6_C_16_n2,SUM,전체
+전체,PsO 환자 타입별 구성  - 비율,생물학적 제제 처방 환자 수,Q3_1-(Q6_A_11 + Q6_B_11 + Q6_C_11_n2)-(Q6_A_16 + Q6_B_16 + Q6_C_16_n2) ,SUM,전체
+전체,PsO 환자 타입별 구성 - 비율,Bx Naïve ,[Q5_1 - Q6_A_11 - Q6_A_16 SUM] / [Q3_1-(Q6_A_11 + Q6_B_11 + Q6_C_11_n2)-(Q6_A_16 + Q6_B_16 + Q6_C_16_n2) SUM] *100 ,계산식,전체
+전체,PsO 환자 타입별 구성 - 비율,Bx Switching,[Q5_2 - Q6_B_11 - Q6_B_16 SUM] / [Q3_1-(Q6_A_11 + Q6_B_11 + Q6_C_11_n2)-(Q6_A_16 + Q6_B_16 + Q6_C_16_n2) SUM] *100 ,계산식,전체
+전체,PsO 환자 타입별 구성 - 비율,Bx Maintain,[Q5_3 - Q6_C_11_n2 - Q6_C_16_n2 SUM] / [Q3_1-(Q6_A_11 + Q6_B_11 + Q6_C_11_n2)-(Q6_A_16 + Q6_B_16 + Q6_C_16_n2) SUM] *100 ,계산식,전체
+전체,건선 환자 타입별 구성 - Dynamic 환자 수 비율,Dynamic 환자 수,[Q5_1 - Q6_A_11 - Q6_A_16 SUM] + [Q5_2 - Q6_B_11 - Q6_B_16 SUM],계산식,전체
+전체,건선 환자 타입별 구성 - Dynamic 환자 수 비율,Dynamic 내 Bx Naïve ,(Q5_1 - Q6_A_11 - Q6_A_16 SUM) / [[Q5_1 - Q6_A_11 - Q6_A_16 SUM] + [Q5_2 - Q6_B_11 - Q6_B_16 SUM]] *100,계산식,전체
+전체,건선 환자 타입별 구성 - Dynamic 환자 수 비율,Dynamic 내 Bx Bx Switching,(Q5_2 - Q6_B_11 - Q6_B_16 SUM) / [[Q5_1 - Q6_A_11 - Q6_A_16 SUM] + [Q5_2 - Q6_B_11 - Q6_B_16 SUM]] *100,계산식,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Total,Total,Q3_1,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Total,Humira,Q6_A_1+Q6_B_1+Q6_C_1_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Total,Enbrel,Q6_A_2+Q6_B_2+Q6_C_2_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Total,Remicade,Q6_A_3+Q6_B_3+Q6_C_3_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Total,Stelara,Q6_A_4+Q6_B_4+Q6_C_4_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Total,Cosentyx,Q6_A_5+Q6_B_5+Q6_C_5_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Total,Taltz,Q6_A_6+Q6_B_6+Q6_C_6_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Total,Tremfya,Q6_A_7+Q6_B_7+Q6_C_7_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Total,Skyrizi,Q6_A_10+Q6_B_10+Q6_C_10_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Total,Bimzelx,Q6_A_12+Q6_B_12+Q6_C_12_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Total,Biosimilar (STT),Q6_A_8+Q6_B_8+Q6_C_8_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Total,BS - Adalloce/Yuflyma,Q6_A_13+Q6_B_13+Q6_C_13_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Total,BS - Epyztek,Q6_A_14+Q6_B_14+Q6_C_14_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Total,BS - Others,Q6_A_15+Q6_B_15+Q6_C_15_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Total,Sotyktu,Q6_A_11+Q6_B_11+Q6_C_11_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Total,Apremilast GX,Q6_A_16+Q6_B_16+Q6_C_16_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Total,Others,Q6_A_9+Q6_B_9+Q6_C_9_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Dynamic,Total,Q5_1+Q5_2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Dynamic,Humira,Q6_A_1+Q6_B_1,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Dynamic,Enbrel,Q6_A_2+Q6_B_2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Dynamic,Remicade,Q6_A_3+Q6_B_3,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Dynamic,Stelara,Q6_A_4+Q6_B_4,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Dynamic,Cosentyx,Q6_A_5+Q6_B_5,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Dynamic,Taltz,Q6_A_6+Q6_B_6,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Dynamic,Tremfya,Q6_A_7+Q6_B_7,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Dynamic,Skyrizi,Q6_A_10+Q6_B_10,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Dynamic,Bimzelx,Q6_A_12+Q6_B_12,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Dynamic,Biosimilar (STT),Q6_A_8+Q6_B_8,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Dynamic,BS - Adalloce/Yuflyma,Q6_A_13+Q6_B_13,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Dynamic,BS - Epyztek,Q6_A_14+Q6_B_14,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Dynamic,BS - Others,Q6_A_15+Q6_B_15,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Dynamic,Sotyktu,Q6_A_11+Q6_B_11,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Dynamic,Apremilast GX,Q6_A_16+Q6_B_16,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Dynamic,Others,Q6_A_9+Q6_B_9,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Naïve,Total,Q5_1,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Naïve,Humira,Q6_A_1,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Naïve,Enbrel,Q6_A_2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Naïve,Remicade,Q6_A_3,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Naïve,Stelara,Q6_A_4,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Naïve,Cosentyx,Q6_A_5,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Naïve,Taltz,Q6_A_6,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Naïve,Tremfya,Q6_A_7,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Naïve,Skyrizi,Q6_A_10,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Naïve,Bimzelx,Q6_A_12,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Naïve,Biosimilar (STT),Q6_A_8,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Naïve,BS - Adalloce/Yuflyma,Q6_A_13,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Naïve,BS - Epyztek,Q6_A_14,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Naïve,BS - Others,Q6_A_15,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Naïve,Sotyktu,Q6_A_11,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Naïve,Apremilast GX,Q6_A_16,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Naïve,Others,Q6_A_9,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Switching,Total,Q5_2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Switching,Humira,Q6_B_1,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Switching,Enbrel,Q6_B_2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Switching,Remicade,Q6_B_3,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Switching,Stelara,Q6_B_4,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Switching,Cosentyx,Q6_B_5,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Switching,Taltz,Q6_B_6,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Switching,Tremfya,Q6_B_7,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Switching,Skyrizi,Q6_B_10,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Switching,Bimzelx,Q6_B_12,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Switching,Biosimilar (STT),Q6_B_8,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Switching,BS - Adalloce/Yuflyma,Q6_B_13,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Switching,BS - Epyztek,Q6_B_14,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Switching,BS - Others,Q6_B_15,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Switching,Sotyktu,Q6_B_11,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Switching,Apremilast GX,Q6_B_16,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Switching,Others,Q6_B_9,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Maintain,Total,Q5_3,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Maintain,Humira,Q6_C_1_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Maintain,Enbrel,Q6_C_2_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Maintain,Remicade,Q6_C_3_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Maintain,Stelara,Q6_C_4_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Maintain,Cosentyx,Q6_C_5_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Maintain,Taltz,Q6_C_6_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Maintain,Tremfya,Q6_C_7_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Maintain,Skyrizi,Q6_C_10_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Maintain,Bimzelx,Q6_C_12_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Maintain,Biosimilar (STT),Q6_C_8_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Maintain,BS - Adalloce/Yuflyma,Q6_C_13_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Maintain,BS - Epyztek,Q6_C_14_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Maintain,BS - Others,Q6_C_15_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Maintain,Sotyktu,Q6_C_11_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Maintain,Apremilast GX,Q6_C_16_n2,SUM,전체
+전체,브랜드별 처방 환자 수 (경구제 포함) - Maintain,Others,Q6_C_9_n2,SUM,전체
+전체,주요 브랜드별 처방 비율 - Total,Total 환자 수,(Q6_A_5+Q6_B_5+Q6_C_5_n2)+(Q6_A_6+Q6_B_6+Q6_C_6_n2)+(Q6_A_7+Q6_B_7+Q6_C_7_n2)+(Q6_A_10+Q6_B_10+Q6_C_10_n2)+(Q6_A_12+Q6_B_12+Q6_C_12_n2),SUM,전체
+전체,주요 브랜드별 처방 비율 - Total,Cosentyx,[Q6_A_5+Q6_B_5+Q6_C_5_n2] / [(Q6_A_5+Q6_B_5+Q6_C_5_n2)+(Q6_A_6+Q6_B_6+Q6_C_6_n2)+(Q6_A_7+Q6_B_7+Q6_C_7_n2)+(Q6_A_10+Q6_B_10+Q6_C_10_n2)+(Q6_A_12+Q6_B_12+Q6_C_12_n2)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Total,Taltz,[Q6_A_6+Q6_B_6+Q6_C_6_n2] / [(Q6_A_5+Q6_B_5+Q6_C_5_n2)+(Q6_A_6+Q6_B_6+Q6_C_6_n2)+(Q6_A_7+Q6_B_7+Q6_C_7_n2)+(Q6_A_10+Q6_B_10+Q6_C_10_n2)+(Q6_A_12+Q6_B_12+Q6_C_12_n2)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Total,Tremfya,[Q6_A_7+Q6_B_7+Q6_C_7_n2] / [(Q6_A_5+Q6_B_5+Q6_C_5_n2)+(Q6_A_6+Q6_B_6+Q6_C_6_n2)+(Q6_A_7+Q6_B_7+Q6_C_7_n2)+(Q6_A_10+Q6_B_10+Q6_C_10_n2)+(Q6_A_12+Q6_B_12+Q6_C_12_n2)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Total,Skyrizi,[Q6_A_10+Q6_B_10+Q6_C_10_n2] / [(Q6_A_5+Q6_B_5+Q6_C_5_n2)+(Q6_A_6+Q6_B_6+Q6_C_6_n2)+(Q6_A_7+Q6_B_7+Q6_C_7_n2)+(Q6_A_10+Q6_B_10+Q6_C_10_n2)+(Q6_A_12+Q6_B_12+Q6_C_12_n2)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Total,Bimzelx,[Q6_A_12+Q6_B_12+Q6_C_12_n2] / [(Q6_A_5+Q6_B_5+Q6_C_5_n2)+(Q6_A_6+Q6_B_6+Q6_C_6_n2)+(Q6_A_7+Q6_B_7+Q6_C_7_n2)+(Q6_A_10+Q6_B_10+Q6_C_10_n2)+(Q6_A_12+Q6_B_12+Q6_C_12_n2)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Dynamic,Total 환자 수,(Q6_A_5+Q6_B_5+Q6_C_5_n2)+(Q6_A_6+Q6_B_6+Q6_C_6_n2)+(Q6_A_7+Q6_B_7+Q6_C_7_n2)+(Q6_A_10+Q6_B_10+Q6_C_10_n2)+(Q6_A_12+Q6_B_12+Q6_C_12_n2),SUM,전체
+전체,주요 브랜드별 처방 비율 - Dynamic,Cosentyx,[Q6_A_5+Q6_B_5] / [(Q6_A_5+Q6_B_5)+(Q6_A_6+Q6_B_6)+(Q6_A_7+Q6_B_7)+(Q6_A_10+Q6_B_10)+(Q6_A_12+Q6_B_12)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Dynamic,Taltz,[Q6_A_6+Q6_B_6] / [(Q6_A_5+Q6_B_5)+(Q6_A_6+Q6_B_6)+(Q6_A_7+Q6_B_7)+(Q6_A_10+Q6_B_10)+(Q6_A_12+Q6_B_12)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Dynamic,Tremfya,[Q6_A_7+Q6_B_7] / [(Q6_A_5+Q6_B_5)+(Q6_A_6+Q6_B_6)+(Q6_A_7+Q6_B_7)+(Q6_A_10+Q6_B_10)+(Q6_A_12+Q6_B_12)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Dynamic,Skyrizi,[Q6_A_10+Q6_B_10] / [(Q6_A_5+Q6_B_5)+(Q6_A_6+Q6_B_6)+(Q6_A_7+Q6_B_7)+(Q6_A_10+Q6_B_10)+(Q6_A_12+Q6_B_12)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Dynamic,Bimzelx,[Q6_A_12+Q6_B_12] / [(Q6_A_5+Q6_B_5)+(Q6_A_6+Q6_B_6)+(Q6_A_7+Q6_B_7)+(Q6_A_10+Q6_B_10)+(Q6_A_12+Q6_B_12)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Dynamic,"IL 17 % (Cosentyx,Taltz, Bimzelx)",[(Q6_A_5+Q6_B_5)+(Q6_A_6+Q6_B_6)+(Q6_A_12+Q6_B_12)] / [(Q6_A_5+Q6_B_5)+(Q6_A_6+Q6_B_6)+(Q6_A_7+Q6_B_7)+(Q6_A_10+Q6_B_10)+(Q6_A_12+Q6_B_12)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Dynamic,Bimzelx % in IL 17 ,(Q6_A_12+Q6_B_12) / [(Q6_A_5+Q6_B_5)+(Q6_A_6+Q6_B_6)+(Q6_A_12+Q6_B_12)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Naïve,Total 환자 수,(Q6_A_5)+(Q6_A_6)+(Q6_A_7)+(Q6_A_10)+(Q6_A_12),SUM,전체
+전체,주요 브랜드별 처방 비율 - Naïve,Cosentyx,[Q6_A_5] / [(Q6_A_5)+(Q6_A_6)+(Q6_A_7)+(Q6_A_10)+(Q6_A_12)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Naïve,Taltz,[Q6_A_6] / [(Q6_A_5)+(Q6_A_6)+(Q6_A_7)+(Q6_A_10)+(Q6_A_12)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Naïve,Tremfya,[Q6_A_7] / [(Q6_A_5)+(Q6_A_6)+(Q6_A_7)+(Q6_A_10)+(Q6_A_12)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Naïve,Skyrizi,[Q6_A_10] / [(Q6_A_5)+(Q6_A_6)+(Q6_A_7)+(Q6_A_10)+(Q6_A_12)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Naïve,Bimzelx,[Q6_A_12] / [(Q6_A_5)+(Q6_A_6)+(Q6_A_7)+(Q6_A_10)+(Q6_A_12)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Switching,Total 환자 수,(Q6_B_5)+(Q6_B_6)+(Q6_B_7)+(Q6_B_10)+(Q6_B_12),SUM,전체
+전체,주요 브랜드별 처방 비율 - Switching,Cosentyx,[Q6_B_5] / [(Q6_B_5)+(Q6_B_6)+(Q6_B_7)+(Q6_B_10)+(Q6_B_12)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Switching,Taltz,[Q6_B_6] / [(Q6_B_5)+(Q6_B_6)+(Q6_B_7)+(Q6_B_10)+(Q6_B_12)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Switching,Tremfya,[Q6_B_7] / [(Q6_B_5)+(Q6_B_6)+(Q6_B_7)+(Q6_B_10)+(Q6_B_12)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Switching,Skyrizi,[Q6_B_10] / [(Q6_B_5)+(Q6_B_6)+(Q6_B_7)+(Q6_B_10)+(Q6_B_12)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Switching,Bimzelx,[Q6_B_12] / [(Q6_B_5)+(Q6_B_6)+(Q6_B_7)+(Q6_B_10)+(Q6_B_12)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Maintain,Total 환자 수,(Q6_C_5_n2)+(Q6_C_6_n2)+(Q6_C_7_n2)+(Q6_C_10_n2)+(Q6_C_12_n2),SUM,전체
+전체,주요 브랜드별 처방 비율 - Maintain,Cosentyx,[Q6_C_5_n2] / [(Q6_C_5_n2)+(Q6_C_6_n2)+(Q6_C_7_n2)+(Q6_C_10_n2)+(Q6_C_12_n2)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Maintain,Taltz,[Q6_C_6_n2] / [(Q6_C_5_n2)+(Q6_C_6_n2)+(Q6_C_7_n2)+(Q6_C_10_n2)+(Q6_C_12_n2)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Maintain,Tremfya,[Q6_C_7_n2] / [(Q6_C_5_n2)+(Q6_C_6_n2)+(Q6_C_7_n2)+(Q6_C_10_n2)+(Q6_C_12_n2)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Maintain,Skyrizi,[Q6_C_10_n2] / [(Q6_C_5_n2)+(Q6_C_6_n2)+(Q6_C_7_n2)+(Q6_C_10_n2)+(Q6_C_12_n2)]*100,계산식,전체
+전체,주요 브랜드별 처방 비율 - Maintain,Bimzelx,[Q6_C_12_n2] / [(Q6_C_5_n2)+(Q6_C_6_n2)+(Q6_C_7_n2)+(Q6_C_10_n2)+(Q6_C_12_n2)]*100,계산식,전체
+전체,브랜드별 디테일링 횟수 - 영업사원+MSL,Total,아래 값의 합계,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원+MSL,Humira (Abbvie),Q7_X_1_3,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원+MSL,Humira (EiSai),Q7_X_2_3,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원+MSL,Enbrel (Pfizer),Q7_X_3_3,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원+MSL,Remicade (Janssen),Q7_X_4_3,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원+MSL,Stelara (Janssen),Q7_X_5_3,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원+MSL,Tremfya (Janssen),Q7_X_6_3,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원+MSL,Cosentyx (Novartis),Q7_X_7_3,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원+MSL,Remsima (Celltrion),Q7_X_8_3,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원+MSL,Etoloce/Remaloce (Samsung),Q7_X_9_3,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원+MSL,Taltz (Lilly),Q7_X_10_3,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원+MSL,Skyrizi(Abbvie),Q7_X_11_3,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원+MSL,Sotyktu (BMS/Yuhan),Q7_X_14_3,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원+MSL,Bimzelx (UCB),Q7_X_15_3,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원+MSL,Adalloce (Samsung),Q7_X_16_3,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원+MSL,Yuflyma (Celltrion),Q7_X_17_3,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원+MSL,Epyztek (Samsung),Q7_X_18_3,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원+MSL,Others,Q7_X_12_3,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원,Total,아래 값의 합계,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원,Humira (Abbvie),Q7_X_1_1,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원,Humira (EiSai),Q7_X_2_1,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원,Enbrel (Pfizer),Q7_X_3_1,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원,Remicade (Janssen),Q7_X_4_1,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원,Stelara (Janssen),Q7_X_5_1,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원,Tremfya (Janssen),Q7_X_6_1,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원,Cosentyx (Novartis),Q7_X_7_1,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원,Remsima (Celltrion),Q7_X_8_1,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원,Etoloce/Remaloce (Samsung),Q7_X_9_1,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원,Taltz (Lilly),Q7_X_10_1,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원,Skyrizi(Abbvie),Q7_X_11_1,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원,Sotyktu (BMS/Yuhan),Q7_X_14_1,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원,Bimzelx (UCB),Q7_X_15_1,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원,Adalloce (Samsung),Q7_X_16_1,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원,Yuflyma (Celltrion),Q7_X_17_1,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원,Epyztek (Samsung),Q7_X_18_1,SUM,전체
+전체,브랜드별 디테일링 횟수 - 영업사원,Others,Q7_X_12_1,SUM,전체
+전체,브랜드별 디테일링 횟수 - MSL,Total,아래 값의 합계,SUM,전체
+전체,브랜드별 디테일링 횟수 - MSL,Humira (Abbvie),Q7_X_1_2,SUM,전체
+전체,브랜드별 디테일링 횟수 - MSL,Humira (EiSai),Q7_X_2_2,SUM,전체
+전체,브랜드별 디테일링 횟수 - MSL,Enbrel (Pfizer),Q7_X_3_2,SUM,전체
+전체,브랜드별 디테일링 횟수 - MSL,Remicade (Janssen),Q7_X_4_2,SUM,전체
+전체,브랜드별 디테일링 횟수 - MSL,Stelara (Janssen),Q7_X_5_2,SUM,전체
+전체,브랜드별 디테일링 횟수 - MSL,Tremfya (Janssen),Q7_X_6_2,SUM,전체
+전체,브랜드별 디테일링 횟수 - MSL,Cosentyx (Novartis),Q7_X_7_2,SUM,전체
+전체,브랜드별 디테일링 횟수 - MSL,Remsima (Celltrion),Q7_X_8_2,SUM,전체
+전체,브랜드별 디테일링 횟수 - MSL,Etoloce/Remaloce (Samsung),Q7_X_9_2,SUM,전체
+전체,브랜드별 디테일링 횟수 - MSL,Taltz (Lilly),Q7_X_10_2,SUM,전체
+전체,브랜드별 디테일링 횟수 - MSL,Skyrizi(Abbvie),Q7_X_11_2,SUM,전체
+전체,브랜드별 디테일링 횟수 - MSL,Sotyktu (BMS/Yuhan),Q7_X_14_2,SUM,전체
+전체,브랜드별 디테일링 횟수 - MSL,Bimzelx (UCB),Q7_X_15_2,SUM,전체
+전체,브랜드별 디테일링 횟수 - MSL,Adalloce (Samsung),Q7_X_16_2,SUM,전체
+전체,브랜드별 디테일링 횟수 - MSL,Yuflyma (Celltrion),Q7_X_17_2,SUM,전체
+전체,브랜드별 디테일링 횟수 - MSL,Epyztek (Samsung),Q7_X_18_2,SUM,전체
+전체,브랜드별 디테일링 횟수 - MSL,Others,Q7_X_12_2,SUM,전체
+전체,주요 브랜드 디테일링 비율-영업사원+MSL,Total 횟수,(Q7_X_7_3 )+(Q7_X_10_3)+(Q7_X_6_3 )+(Q7_X_11_3)+(Q7_X_15_3 ),SUM,전체
+전체,주요 브랜드 디테일링 비율-영업사원+MSL,Cosentyx,[Q7_X_7_3 ] / [(Q7_X_7_3 )+(Q7_X_10_3)+(Q7_X_6_3 )+(Q7_X_11_3)+(Q7_X_15_3 )]*100,계산식,전체
+전체,주요 브랜드 디테일링 비율-영업사원+MSL,Taltz,[Q7_X_10_3] / [(Q7_X_7_3 )+(Q7_X_10_3)+(Q7_X_6_3 )+(Q7_X_11_3)+(Q7_X_15_3 )]*100,계산식,전체
+전체,주요 브랜드 디테일링 비율-영업사원+MSL,Tremfya,[Q7_X_6_3 ] / [(Q7_X_7_3 )+(Q7_X_10_3)+(Q7_X_6_3 )+(Q7_X_11_3)+(Q7_X_15_3 )]*100,계산식,전체
+전체,주요 브랜드 디테일링 비율-영업사원+MSL,Skyrizi,[Q7_X_11_3] / [(Q7_X_7_3 )+(Q7_X_10_3)+(Q7_X_6_3 )+(Q7_X_11_3)+(Q7_X_15_3 )]*100,계산식,전체
+전체,주요 브랜드 디테일링 비율-영업사원+MSL,Bimzelx,[Q7_X_15_3 ] / [(Q7_X_7_3 )+(Q7_X_10_3)+(Q7_X_6_3 )+(Q7_X_11_3)+(Q7_X_15_3 )]*100,계산식,전체
+전체,주요 브랜드 디테일링 비율-영업사원,Total 횟수,(Q7_X_7_1)+(Q7_X_10_1)+(Q7_X_6_1)+(Q7_X_11_1)+(Q7_X_15_1),SUM,전체
+전체,주요 브랜드 디테일링 비율-영업사원,Cosentyx,[Q7_X_7_1] / [(Q7_X_7_1)+(Q7_X_10_1)+(Q7_X_6_1)+(Q7_X_11_1)+(Q7_X_15_1)]*100,계산식,전체
+전체,주요 브랜드 디테일링 비율-영업사원,Taltz,[Q7_X_10_1] / [(Q7_X_7_1)+(Q7_X_10_1)+(Q7_X_6_1)+(Q7_X_11_1)+(Q7_X_15_1)]*100,계산식,전체
+전체,주요 브랜드 디테일링 비율-영업사원,Tremfya,[Q7_X_6_1] / [(Q7_X_7_1)+(Q7_X_10_1)+(Q7_X_6_1)+(Q7_X_11_1)+(Q7_X_15_1)]*100,계산식,전체
+전체,주요 브랜드 디테일링 비율-영업사원,Skyrizi,[Q7_X_11_1] / [(Q7_X_7_1)+(Q7_X_10_1)+(Q7_X_6_1)+(Q7_X_11_1)+(Q7_X_15_1)]*100,계산식,전체
+전체,주요 브랜드 디테일링 비율-영업사원,Bimzelx,[Q7_X_15_1] / [(Q7_X_7_1)+(Q7_X_10_1)+(Q7_X_6_1)+(Q7_X_11_1)+(Q7_X_15_1)]*100,계산식,전체
+전체,주요 브랜드 디테일링 비율-MSL,Total 횟수,(Q7_X_7_2)+(Q7_X_10_2)+(Q7_X_6_2)+(Q7_X_11_2)+(Q7_X_15_2),SUM,전체
+전체,주요 브랜드 디테일링 비율-MSL,Cosentyx,[Q7_X_7_2] / [(Q7_X_7_2)+(Q7_X_10_2)+(Q7_X_6_2)+(Q7_X_11_2)+(Q7_X_15_2)]*100,계산식,전체
+전체,주요 브랜드 디테일링 비율-MSL,Taltz,[Q7_X_10_2] / [(Q7_X_7_2)+(Q7_X_10_2)+(Q7_X_6_2)+(Q7_X_11_2)+(Q7_X_15_2)]*100,계산식,전체
+전체,주요 브랜드 디테일링 비율-MSL,Tremfya,[Q7_X_6_2] / [(Q7_X_7_2)+(Q7_X_10_2)+(Q7_X_6_2)+(Q7_X_11_2)+(Q7_X_15_2)]*100,계산식,전체
+전체,주요 브랜드 디테일링 비율-MSL,Skyrizi,[Q7_X_11_2] / [(Q7_X_7_2)+(Q7_X_10_2)+(Q7_X_6_2)+(Q7_X_11_2)+(Q7_X_15_2)]*100,계산식,전체
+전체,주요 브랜드 디테일링 비율-MSL,Bimzelx,[Q7_X_15_2] / [(Q7_X_7_2)+(Q7_X_10_2)+(Q7_X_6_2)+(Q7_X_11_2)+(Q7_X_15_2)]*100,계산식,전체
+전체,브랜드별 마케팅 활동 횟수 - On+Off+Seminar ,Total,아래의 합계,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - On+Off+Seminar ,Humira (Abbvie),Q13_1_5,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - On+Off+Seminar ,Enbrel (Pfizer),Q13_3_5,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - On+Off+Seminar ,Remicade (Janssen),Q13_4_5,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - On+Off+Seminar ,Stelara (Janssen),Q13_5_5,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - On+Off+Seminar ,Cosentyx (Novartis),Q13_6_5,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - On+Off+Seminar ,Remsima (Celltrion),Q13_7_5,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - On+Off+Seminar ,Etoloce/Remaloce (Samsung),Q13_8_5,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - On+Off+Seminar ,Taltz (Lilly),Q13_9_5,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - On+Off+Seminar ,Skyrizi(Abbvie),Q13_11_5,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - On+Off+Seminar ,Tremfya (Janssen),Q13_13_5,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - On+Off+Seminar ,Sotyktu (BMS/Yuhan),Q13_14_5,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - On+Off+Seminar ,Bimzelx (UCB),Q13_15_5,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - On+Off+Seminar ,Adalloce (Samsung),Q13_16_5,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - On+Off+Seminar ,Yuflyma (Celltrion),Q13_17_5,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - On+Off+Seminar ,Epyztek (Samsung),Q13_18_5,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - On+Off+Seminar ,Others,Q13_12_5,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Online Symposium,Total,아래의 합계,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Online Symposium,Humira (Abbvie),Q13_1_2,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Online Symposium,Enbrel (Pfizer),Q13_3_2,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Online Symposium,Remicade (Janssen),Q13_4_2,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Online Symposium,Stelara (Janssen),Q13_5_2,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Online Symposium,Cosentyx (Novartis),Q13_6_2,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Online Symposium,Remsima (Celltrion),Q13_7_2,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Online Symposium,Etoloce/Remaloce (Samsung),Q13_8_2,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Online Symposium,Taltz (Lilly),Q13_9_2,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Online Symposium,Skyrizi(Abbvie),Q13_11_2,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Online Symposium,Tremfya (Janssen),Q13_13_2,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Online Symposium,Sotyktu (BMS/Yuhan),Q13_14_2,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Online Symposium,Bimzelx (UCB),Q13_15_2,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Online Symposium,Adalloce (Samsung),Q13_16_2,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Online Symposium,Yuflyma (Celltrion),Q13_17_2,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Online Symposium,Epyztek (Samsung),Q13_18_2,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Online Symposium,Others,Q13_12_2,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Offline Symposium,Total,아래의 합계,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Offline Symposium,Humira (Abbvie),Q13_1_3,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Offline Symposium,Enbrel (Pfizer),Q13_3_3,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Offline Symposium,Remicade (Janssen),Q13_4_3,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Offline Symposium,Stelara (Janssen),Q13_5_3,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Offline Symposium,Cosentyx (Novartis),Q13_6_3,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Offline Symposium,Remsima (Celltrion),Q13_7_3,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Offline Symposium,Etoloce/Remaloce (Samsung),Q13_8_3,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Offline Symposium,Taltz (Lilly),Q13_9_3,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Offline Symposium,Skyrizi(Abbvie),Q13_11_3,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Offline Symposium,Tremfya (Janssen),Q13_13_3,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Offline Symposium,Sotyktu (BMS/Yuhan),Q13_14_3,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Offline Symposium,Bimzelx (UCB),Q13_15_3,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Offline Symposium,Adalloce (Samsung),Q13_16_3,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Offline Symposium,Yuflyma (Celltrion),Q13_17_3,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Offline Symposium,Epyztek (Samsung),Q13_18_3,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Offline Symposium,Others,Q13_12_3,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Small group meeting,Total,아래의 합계,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Small group meeting,Humira (Abbvie),Q13_1_4,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Small group meeting,Enbrel (Pfizer),Q13_3_4,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Small group meeting,Remicade (Janssen),Q13_4_4,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Small group meeting,Stelara (Janssen),Q13_5_4,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Small group meeting,Cosentyx (Novartis),Q13_6_4,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Small group meeting,Remsima (Celltrion),Q13_7_4,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Small group meeting,Etoloce/Remaloce (Samsung),Q13_8_4,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Small group meeting,Taltz (Lilly),Q13_9_4,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Small group meeting,Skyrizi(Abbvie),Q13_11_4,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Small group meeting,Tremfya (Janssen),Q13_13_4,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Small group meeting,Sotyktu (BMS/Yuhan),Q13_14_4,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Small group meeting,Bimzelx (UCB),Q13_15_4,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Small group meeting,Adalloce (Samsung),Q13_16_4,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Small group meeting,Yuflyma (Celltrion),Q13_17_4,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Small group meeting,Epyztek (Samsung),Q13_18_4,SUM,전체
+전체,브랜드별 마케팅 활동 횟수 - Small group meeting,Others,Q13_12_4,SUM,전체
+전체,주요 브랜드 마케팅 활동 비율- On+Off+Seminar ,Total 횟수,(Q13_6_5 )+(Q13_9_5 )+(Q13_13_5 )+(Q13_11_5 )+(Q13_15_5 ),SUM,전체
+전체,주요 브랜드 마케팅 활동 비율- On+Off+Seminar ,Cosentyx,[Q13_6_5 ] / [(Q13_6_5 )+(Q13_9_5 )+(Q13_13_5 )+(Q13_11_5 )+(Q13_15_5 )]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- On+Off+Seminar ,Taltz,[Q13_9_5 ] / [(Q13_6_5 )+(Q13_9_5 )+(Q13_13_5 )+(Q13_11_5 )+(Q13_15_5 )]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- On+Off+Seminar ,Tremfya,[Q13_13_5 ] / [(Q13_6_5 )+(Q13_9_5 )+(Q13_13_5 )+(Q13_11_5 )+(Q13_15_5 )]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- On+Off+Seminar ,Skyrizi,[Q13_11_5 ] / [(Q13_6_5 )+(Q13_9_5 )+(Q13_13_5 )+(Q13_11_5 )+(Q13_15_5 )]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- On+Off+Seminar ,Bimzelx,[Q13_15_5 ] / [(Q13_6_5 )+(Q13_9_5 )+(Q13_13_5 )+(Q13_11_5 )+(Q13_15_5 )]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- Online Symposium,Total 횟수,(Q13_6_2 )+(Q13_9_2)+(Q13_13_2)+(Q13_11_2)+(Q13_15_2),SUM,전체
+전체,주요 브랜드 마케팅 활동 비율- Online Symposium,Cosentyx,[Q13_6_2 ] / [(Q13_6_2 )+(Q13_9_2)+(Q13_13_2)+(Q13_11_2)+(Q13_15_2)]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- Online Symposium,Taltz,[Q13_9_2] / [(Q13_6_2 )+(Q13_9_2)+(Q13_13_2)+(Q13_11_2)+(Q13_15_2)]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- Online Symposium,Tremfya,[Q13_13_2] / [(Q13_6_2 )+(Q13_9_2)+(Q13_13_2)+(Q13_11_2)+(Q13_15_2)]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- Online Symposium,Skyrizi,[Q13_11_2] / [(Q13_6_2 )+(Q13_9_2)+(Q13_13_2)+(Q13_11_2)+(Q13_15_2)]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- Online Symposium,Bimzelx,[Q13_15_2] / [(Q13_6_2 )+(Q13_9_2)+(Q13_13_2)+(Q13_11_2)+(Q13_15_2)]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- Offline Symposium,Total 횟수,(Q13_6_3)+(Q13_9_3)+(Q13_13_3)+(Q13_11_3)+(Q13_15_3),SUM,전체
+전체,주요 브랜드 마케팅 활동 비율- Offline Symposium,Cosentyx,[Q13_6_3] / [(Q13_6_3)+(Q13_9_3)+(Q13_13_3)+(Q13_11_3)+(Q13_15_3)]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- Offline Symposium,Taltz,[Q13_9_3] / [(Q13_6_3)+(Q13_9_3)+(Q13_13_3)+(Q13_11_3)+(Q13_15_3)]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- Offline Symposium,Tremfya,[Q13_13_3] / [(Q13_6_3)+(Q13_9_3)+(Q13_13_3)+(Q13_11_3)+(Q13_15_3)]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- Offline Symposium,Skyrizi,[Q13_11_3] / [(Q13_6_3)+(Q13_9_3)+(Q13_13_3)+(Q13_11_3)+(Q13_15_3)]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- Offline Symposium,Bimzelx,[Q13_15_3] / [(Q13_6_3)+(Q13_9_3)+(Q13_13_3)+(Q13_11_3)+(Q13_15_3)]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- Small group meeting,Total 횟수,(Q13_6_4)+(Q13_9_4)+(Q13_13_4)+(Q13_11_4)+(Q13_15_4),SUM,전체
+전체,주요 브랜드 마케팅 활동 비율- Small group meeting,Cosentyx,[Q13_6_4] / [(Q13_6_4)+(Q13_9_4)+(Q13_13_4)+(Q13_11_4)+(Q13_15_4)]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- Small group meeting,Taltz,[Q13_9_4] / [(Q13_6_4)+(Q13_9_4)+(Q13_13_4)+(Q13_11_4)+(Q13_15_4)]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- Small group meeting,Tremfya,[Q13_13_4] / [(Q13_6_4)+(Q13_9_4)+(Q13_13_4)+(Q13_11_4)+(Q13_15_4)]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- Small group meeting,Skyrizi,[Q13_11_4] / [(Q13_6_4)+(Q13_9_4)+(Q13_13_4)+(Q13_11_4)+(Q13_15_4)]*100,계산식,전체
+전체,주요 브랜드 마케팅 활동 비율- Small group meeting,Bimzelx,[Q13_15_4] / [(Q13_6_4)+(Q13_9_4)+(Q13_13_4)+(Q13_11_4)+(Q13_15_4)]*100,계산식,전체
