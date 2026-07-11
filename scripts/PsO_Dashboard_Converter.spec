@@ -19,6 +19,7 @@ a = Analysis(
         (os.path.join(project_root, "config/metric_spec.csv"), "config"),
         (os.path.join(project_root, "config/VERSION"), "config"),
         (os.path.join(project_root, "db/PsO_dashboard_v4 (2).html"), "db"),
+        (os.path.join(project_root, "src/dashboard/report_assets/toc.html"), "src/dashboard/report_assets"),
     ],
     hiddenimports=pyreadstat_hiddenimports,
     hookspath=[],

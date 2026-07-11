@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>TOC</title>
+<style>
+  html,body{margin:0;padding:0;background:#0a1535;}
+  * { box-sizing: border-box; font-family: Arial, 'Malgun Gothic', sans-serif; }
+  #tocPage{
+    position:relative; width:1440px; height:810px;
+    background:#0a1535; overflow:hidden;
+    padding:60px 80px; color:#fff;
+  }
+  .logo-row{display:flex;align-items:center;gap:12px;position:absolute;top:60px;right:80px;z-index:1;}
+  .logo-box{width:36px;height:36px;border:2.5px solid rgba(255,255,255,0.7);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;letter-spacing:-0.5px;}
+  .logo-text{font-size:12px;color:rgba(255,255,255,0.75);line-height:1.5;}
+  .kicker{font-size:13px;color:rgba(255,255,255,0.55);letter-spacing:1px;margin-bottom:18px;position:relative;z-index:1;}
+  h1{font-size:44px;font-weight:800;color:#fff;margin:0 0 60px;letter-spacing:-0.5px;position:relative;z-index:1;}
+  .toc-row{display:flex;align-items:baseline;gap:18px;padding:22px 0;border-top:1px solid rgba(255,255,255,0.15);position:relative;z-index:1;}
+  .toc-row:last-child{border-bottom:1px solid rgba(255,255,255,0.15);}
+  .toc-num{font-size:26px;font-weight:800;width:50px;color:rgba(255,255,255,0.35);}
+  .toc-label{font-size:20px;font-weight:600;color:rgba(255,255,255,0.35);flex:0 0 auto;}
+  .toc-line{flex:1;border-top:1px dashed rgba(255,255,255,0.25);margin:0 8px;}
+  .toc-page{font-size:14px;font-weight:700;color:rgba(255,255,255,0.35);}
+  .toc-row.active .toc-num,
+  .toc-row.active .toc-label,
+  .toc-row.active .toc-page{color:#fff;}
+</style>
+</head>
+<body>
+<div id="tocPage">
+  <svg viewBox="0 0 1440 320" preserveAspectRatio="none" style="position:absolute;bottom:0;left:0;width:100%;height:45%;opacity:0.85;" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="wg1" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:#0066cc;stop-opacity:0.6"/>
+        <stop offset="100%" style="stop-color:#00d4ff;stop-opacity:0.8"/>
+      </linearGradient>
+      <linearGradient id="wg2" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:#0044aa;stop-opacity:0.4"/>
+        <stop offset="100%" style="stop-color:#00b4e8;stop-opacity:0.6"/>
+      </linearGradient>
+    </defs>
+    <path d="M0,200 C200,120 400,280 600,200 C800,120 1000,240 1200,180 C1320,150 1400,190 1440,170 L1440,320 L0,320 Z" fill="url(#wg2)" opacity="0.5"/>
+    <path d="M0,240 C180,160 360,300 540,220 C720,140 900,280 1080,210 C1260,150 1380,220 1440,200 L1440,320 L0,320 Z" fill="url(#wg1)" opacity="0.6"/>
+    <path d="M0,270 C120,210 300,310 480,250 C660,190 840,290 1020,240 C1200,190 1360,250 1440,230 L1440,320 L0,320 Z" fill="#1a6fd4" opacity="0.4"/>
+    <path d="M0,260 C200,200 400,280 700,230 C900,200 1200,260 1440,240" fill="none" stroke="#00d4ff" stroke-width="1" opacity="0.5"/>
+    <path d="M0,275 C250,220 450,290 720,245 C950,210 1250,270 1440,252" fill="none" stroke="#00b4e8" stroke-width="0.8" opacity="0.4"/>
+    <path d="M0,285 C180,240 380,295 660,258 C880,228 1150,278 1440,262" fill="none" stroke="#0088cc" stroke-width="0.7" opacity="0.35"/>
+    <path d="M0,292 C150,255 350,300 640,268 C860,242 1140,285 1440,270" fill="none" stroke="#0066bb" stroke-width="0.6" opacity="0.3"/>
+  </svg>
+
+  <div class="logo-row">
+    <div class="logo-box">ucb</div>
+    <div class="logo-text">Inspired by <strong>patients.</strong><br>Driven by <strong>science.</strong></div>
+  </div>
+
+  <div class="kicker" id="tocKicker">[PsO H-Biologics Tracker]</div>
+  <h1>CONTENTS</h1>
+
+  <div class="toc-row" id="tocRow01">
+    <div class="toc-num">01</div>
+    <div class="toc-label">조사 설계</div>
+    <div class="toc-line"></div>
+    <div class="toc-page">03p</div>
+  </div>
+  <div class="toc-row" id="tocRow02">
+    <div class="toc-num">02</div>
+    <div class="toc-label">조사 결과</div>
+    <div class="toc-line"></div>
+    <div class="toc-page">05p</div>
+  </div>
+</div>
+</body>
+</html>

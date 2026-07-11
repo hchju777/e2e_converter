@@ -1,13 +1,17 @@
 """비개발자용 로컬 SAV → HTML/CSV 변환 웹 애플리케이션."""
 
+import hashlib
 import json
 import os
 import re
+import signal
 import tempfile
 import threading
+import time
 import uuid
 import webbrowser
 import sys
+from contextlib import contextmanager
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -91,6 +95,10 @@ button.onclick=async()=>{
     document.getElementById('htmlDownload').href=data.html_url; document.getElementById('csvDownload').href=data.csv_url;
     document.getElementById('pdfDownload').href=data.pdf_url; document.getElementById('pptxDownload').href=data.pptx_url;
     downloads.classList.add('show');
+    ['pdfDownload','pptxDownload'].forEach(id=>{
+      const link=document.getElementById(id); let built=false;
+      link.onclick=()=>{ if(!built){ built=true; showStatus('working','⏳ 처음 요청이라 PDF/PPTX를 새로 만들고 있습니다. 최대 30초 정도 걸릴 수 있어요...'); } };
+    });
     if(data.warnings.length){
       warnings.className='warnings show';
       warnings.innerHTML='<div class="warnings-title">⚠️ 계산 경고 '+data.warning_count+'건</div>';
@@ -125,8 +133,12 @@ def load_web_settings() -> dict:
     return settings
 
 
-def convert_sav(sav_path: Path, period: str, settings: dict, output_dir: Path) -> dict:
-    """업로드된 SAV를 계산하여 HTML/CSV 파일과 요약 정보를 반환한다."""
+def convert_sav(sav_path: Path, period: str, settings: dict, output_dir: Path, sav_hash: str) -> dict:
+    """업로드된 SAV를 계산하여 HTML/CSV 파일과 요약 정보를 반환한다.
+
+    PDF/PPTX는 여기서 만들지 않는다 — 실제로 다운로드가 요청될 때 lazy하게 생성한다
+    (ConverterServer.get_or_build_report 참고).
+    """
     _period_label(period)  # 계산 전에 차수 형식을 먼저 검증한다.
     logger.info("📂 업로드 SAV 읽는 중: %s", sav_path.name)
     df, _meta = pyreadstat.read_sav(str(sav_path))
@@ -158,20 +170,18 @@ def convert_sav(sav_path: Path, period: str, settings: dict, output_dir: Path) -
     result_df = pd.concat(result_frames, ignore_index=True)
     csv_path = output_dir / "metrics.csv"
     html_path = output_dir / "dashboard.html"
-    pdf_path = output_dir / "report.pdf"
-    pptx_path = output_dir / "presentation.pptx"
-    
+
     result_df.to_csv(csv_path, index=False, encoding="utf-8-sig", na_rep="NaN")
     build_dashboard(settings["dashboard_template"], str(html_path), period, banner_values)
-    generate_pdf(str(pdf_path), period, len(df), result_df)
-    generate_pptx(str(pptx_path), period, len(df), result_df)
-    
+
     logger.info("✅ 변환 완료: 지표 %d개, 경고 %d개", len(result_df), len(warning_messages))
     return {
         "html_path": html_path,
         "csv_path": csv_path,
-        "pdf_path": pdf_path,
-        "pptx_path": pptx_path,
+        "period": period,
+        # 같은 SAV(내용 동일) + 같은 차수는 항상 같은 결과이므로, 업로드 토큰이 달라도
+        # PDF/PPTX 캐시를 공유할 수 있도록 내용 기반 키를 만든다.
+        "cache_key": f"{sav_hash}:{period}",
         "respondents": len(df),
         "metrics": len(result_df),
         "warnings": warning_messages,
@@ -185,6 +195,80 @@ class ConverterServer(ThreadingHTTPServer):
         self.temp_dir = tempfile.TemporaryDirectory(prefix="pso_converter_")
         self.jobs: dict[str, dict] = {}
         self.jobs_lock = threading.Lock()
+        self._active_jobs = 0
+        self._active_jobs_lock = threading.Lock()
+
+        # PDF/PPTX는 요청이 실제로 들어올 때 lazy하게 만들고, 같은 SAV+차수(cache_key)에
+        # 대해서는 다시 만들지 않고 캐시된 파일을 그대로 돌려준다.
+        self._report_cache_dir = Path(self.temp_dir.name) / "_report_cache"
+        self._report_cache_dir.mkdir(exist_ok=True)
+        self.report_cache: dict[str, dict[str, Path]] = {}
+        self.report_cache_lock = threading.Lock()
+        self._report_build_locks: dict[str, threading.Lock] = {}
+
+    @property
+    def active_job_count(self) -> int:
+        with self._active_jobs_lock:
+            return self._active_jobs
+
+    @contextmanager
+    def track_job(self):
+        """/convert, /download 처리 구간을 표시한다. 종료 시 이 구간이 끝날 때까지 temp_dir을 지우지 않는다."""
+        with self._active_jobs_lock:
+            self._active_jobs += 1
+        try:
+            yield
+        finally:
+            with self._active_jobs_lock:
+                self._active_jobs -= 1
+
+    def _build_lock_for(self, cache_key: str, kind: str) -> threading.Lock:
+        lock_key = f"{cache_key}:{kind}"
+        with self.report_cache_lock:
+            lock = self._report_build_locks.get(lock_key)
+            if lock is None:
+                lock = threading.Lock()
+                self._report_build_locks[lock_key] = lock
+            return lock
+
+    def get_or_build_report(self, kind: str, cache_key: str, dashboard_html: Path, period: str) -> Path:
+        """PDF/PPTX를 요청 시점에 만들고(lazy), 같은 cache_key로 이미 만든 게 있으면 그걸 재사용한다."""
+        cached = self._cached_report_path(cache_key, kind)
+        if cached is not None:
+            logger.info("♻️ 캐시된 %s 재사용 (key=%s)", kind.upper(), cache_key[:16])
+            return cached
+
+        # 같은 키에 대한 생성은 한 번만: 동시에 두 요청이 들어와도 한쪽만 실제로 만든다.
+        with self._build_lock_for(cache_key, kind):
+            cached = self._cached_report_path(cache_key, kind)
+            if cached is not None:
+                logger.info("♻️ 캐시된 %s 재사용 (key=%s)", kind.upper(), cache_key[:16])
+                return cached
+
+            # cache_key(예: "<sha256>:26년 6차")에는 Windows 경로에 쓸 수 없는 문자(:)가
+            # 섞여 있을 수 있으므로, 폴더명은 별도로 해시해서 만든다.
+            safe_dir_name = hashlib.sha256(cache_key.encode("utf-8")).hexdigest()
+            out_dir = self._report_cache_dir / safe_dir_name
+            out_dir.mkdir(parents=True, exist_ok=True)
+            extension = "pdf" if kind == "pdf" else "pptx"
+            out_path = out_dir / f"report.{extension}"
+
+            logger.info("🛠️ %s 최초 요청 — 생성 시작 (key=%s)", kind.upper(), cache_key[:16])
+            if kind == "pdf":
+                generate_pdf(str(out_path), str(dashboard_html), period)
+            else:
+                generate_pptx(str(out_path), str(dashboard_html), period)
+
+            with self.report_cache_lock:
+                self.report_cache.setdefault(cache_key, {})[kind] = out_path
+            return out_path
+
+    def _cached_report_path(self, cache_key: str, kind: str) -> Path | None:
+        with self.report_cache_lock:
+            path = self.report_cache.get(cache_key, {}).get(kind)
+        if path is not None and path.exists():
+            return path
+        return None
 
     def server_close(self):
         super().server_close()
@@ -217,14 +301,28 @@ class ConverterHandler(BaseHTTPRequestHandler):
             return
         parts = path.strip("/").split("/")
         if len(parts) == 3 and parts[0] == "download" and parts[2] in {"html", "csv", "pdf", "pptx"}:
+            kind = parts[2]
             with self.server.jobs_lock:
                 job = self.server.jobs.get(parts[1])
             if not job:
                 self.send_error(HTTPStatus.NOT_FOUND)
                 return
-            file_path = job[f"{parts[2]}_path"]
+
+            if kind in ("html", "csv"):
+                file_path = job[f"{kind}_path"]
+            else:
+                try:
+                    with self.server.track_job():
+                        file_path = self.server.get_or_build_report(
+                            kind, job["cache_key"], job["html_path"], job["period"]
+                        )
+                except Exception:
+                    logger.exception("💥 %s 생성 실패", kind.upper())
+                    self._json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": f"{kind.upper()} 생성에 실패했습니다."})
+                    return
+
             body = file_path.read_bytes()
-            
+
             filename_map = {
                 "html": "PsO_dashboard.html",
                 "csv": "PsO_metrics.csv",
@@ -238,8 +336,8 @@ class ConverterHandler(BaseHTTPRequestHandler):
                 "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
             }
             
-            filename = filename_map[parts[2]]
-            content_type = content_type_map[parts[2]]
+            filename = filename_map[kind]
+            content_type = content_type_map[kind]
             
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", content_type)
@@ -255,6 +353,10 @@ class ConverterHandler(BaseHTTPRequestHandler):
         if parsed.path != "/convert":
             self.send_error(HTTPStatus.NOT_FOUND)
             return
+        with self.server.track_job():
+            self._handle_convert(parsed)
+
+    def _handle_convert(self, parsed):
         try:
             length = int(self.headers.get("Content-Length", "0"))
             if length <= 0:
@@ -274,15 +376,17 @@ class ConverterHandler(BaseHTTPRequestHandler):
             job_dir.mkdir()
             sav_path = job_dir / "input.sav"
             remaining = length
+            hasher = hashlib.sha256()
             with sav_path.open("wb") as file:
                 while remaining:
                     chunk = self.rfile.read(min(1024 * 1024, remaining))
                     if not chunk:
                         raise ValueError("파일 업로드가 중간에 끊겼습니다.")
                     file.write(chunk)
+                    hasher.update(chunk)
                     remaining -= len(chunk)
 
-            result = convert_sav(sav_path, period, self.server.settings, job_dir)
+            result = convert_sav(sav_path, period, self.server.settings, job_dir, hasher.hexdigest())
             with self.server.jobs_lock:
                 self.server.jobs[token] = result
             self._json(HTTPStatus.OK, {
@@ -297,6 +401,40 @@ class ConverterHandler(BaseHTTPRequestHandler):
             self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
 
 
+def _install_shutdown_handlers(shutdown_event: threading.Event) -> None:
+    """Ctrl+C(SIGINT), SIGTERM, Ctrl+Break(Windows SIGBREAK)를 받으면 종료 이벤트를 켠다."""
+
+    def handle_signal(signum, _frame):
+        logger.info("🛑 종료 신호를 받았습니다 (signal=%s)", signum)
+        shutdown_event.set()
+
+    signal.signal(signal.SIGINT, handle_signal)
+    if hasattr(signal, "SIGTERM"):
+        signal.signal(signal.SIGTERM, handle_signal)
+    if hasattr(signal, "SIGBREAK"):  # Windows: Ctrl+Break
+        signal.signal(signal.SIGBREAK, handle_signal)
+
+
+def _graceful_shutdown(server: ConverterServer, timeout: float = 60.0) -> None:
+    """새 요청을 막고, 진행 중인 변환 작업이 끝날 때까지 기다린 뒤 정리한다."""
+    logger.info("⏹️ 새 요청 수신을 중단합니다")
+    server.shutdown()  # serve_forever 루프 종료 (다른 스레드에서 호출해야 함)
+
+    waited = 0.0
+    interval = 1.0
+    while server.active_job_count > 0 and waited < timeout:
+        logger.info("⏳ 진행 중인 변환 작업 %d건이 끝나기를 기다리는 중... (%.0fs 경과)",
+                    server.active_job_count, waited)
+        time.sleep(interval)
+        waited += interval
+
+    if server.active_job_count > 0:
+        logger.warning("⚠️ %d건의 작업이 끝나지 않았지만 종료를 진행합니다", server.active_job_count)
+
+    server.server_close()
+    logger.info("✅ 변환기를 안전하게 종료했습니다")
+
+
 def main():
     settings = load_web_settings()
     server = ConverterServer((HOST, DEFAULT_PORT), ConverterHandler, settings)
@@ -305,12 +443,22 @@ def main():
     logger.info("🔒 SAV 파일은 이 PC 안에서만 처리됩니다")
     if os.environ.get("PSO_NO_BROWSER") != "1":
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()
+
+    shutdown_event = threading.Event()
+    _install_shutdown_handlers(shutdown_event)
+
+    server_thread = threading.Thread(target=server.serve_forever, name="pso-http-server", daemon=True)
+    server_thread.start()
+
     try:
-        server.serve_forever()
+        while not shutdown_event.is_set():
+            shutdown_event.wait(0.5)
     except KeyboardInterrupt:
-        logger.info("👋 변환기를 종료합니다")
+        # signal 핸들러가 걸리지 않는 환경을 위한 안전망
+        logger.info("🛑 Ctrl+C를 감지했습니다")
     finally:
-        server.server_close()
+        _graceful_shutdown(server, timeout=60.0)
+        server_thread.join(timeout=5)
 
 
 if __name__ == "__main__":

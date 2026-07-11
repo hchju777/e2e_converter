@@ -1,218 +1,219 @@
-"""대시보드 데이터로부터 PDF 리포트를 생성하는 모듈."""
+"""대시보드 HTML을 캡처해 PsO H-Biologics Tracker 형식의 PDF 리포트를 생성한다."""
 
-from datetime import datetime
-from pathlib import Path
 from io import BytesIO
+from pathlib import Path
 
-import pandas as pd
-from reportlab.lib.pagesizes import A4, letter
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch, cm
 from reportlab.lib import colors
-from reportlab.platypus import (
-    SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak,
-    Image as RLImage
-)
+from reportlab.lib.pagesizes import landscape
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from reportlab.platypus import Paragraph, Table, TableStyle
+
+from src.dashboard import report_style as style
+from src.dashboard.build_dashboard import _report_label
+from src.dashboard.report_data import (
+    ReportPage,
+    capture_static_pages,
+    collect_report_pages,
+    label_column_count,
+)
+from src.utils.logger import get_logger
 
 
-def generate_pdf(
-    output_path: str,
-    period: str,
-    respondents: int,
-    metrics_df: pd.DataFrame,
-    banner_names: list[str] = None,
-) -> Path:
-    """지표 결과로부터 PDF 보고서를 생성한다.
-    
+logger = get_logger(__name__)
+
+PAGE_SIZE = (style.PAGE_WIDTH_IN * inch, style.PAGE_HEIGHT_IN * inch)
+MARGIN = style.MARGIN_IN * inch
+
+
+def _rgb(t: tuple[int, int, int]):
+    return colors.Color(t[0] / 255, t[1] / 255, t[2] / 255)
+
+
+def _draw_full_bleed_image(c: canvas.Canvas, png_bytes: bytes):
+    img = ImageReader(BytesIO(png_bytes))
+    iw, ih = img.getSize()
+    page_w, page_h = PAGE_SIZE
+    scale = min(page_w / iw, page_h / ih)
+    w, h = iw * scale, ih * scale
+    x, y = (page_w - w) / 2, (page_h - h) / 2
+    c.drawImage(img, x, y, width=w, height=h)
+
+
+def _draw_static_page(c: canvas.Canvas, png_bytes: bytes):
+    c.setFillColorRGB(1, 1, 1)
+    c.rect(0, 0, *PAGE_SIZE, fill=1, stroke=0)
+    _draw_full_bleed_image(c, png_bytes)
+    c.showPage()
+
+
+def _build_table_flowable(page: ReportPage) -> Table:
+    table = page.table
+    label_cols = label_column_count(table)
+    data = [["" for _ in range(table.n_cols)] for _ in range(table.n_rows)]
+    for (r, cy), text in table.cells.items():
+        data[r][cy] = text.replace("\n", " ")
+
+    header_style = ParagraphStyle("hdr", fontName=style.KOREAN_FONT_BOLD_NAME, fontSize=style.TABLE_HEADER_FONT_SIZE,
+                                   textColor=_rgb(style.TABLE_HEADER_TEXT), alignment=1, leading=9)
+    body_style = ParagraphStyle("body", fontName=style.KOREAN_FONT_NAME, fontSize=style.TABLE_FONT_SIZE,
+                                 textColor=_rgb(style.TABLE_BODY_TEXT), alignment=1, leading=9)
+    label_style = ParagraphStyle("label", fontName=style.KOREAN_FONT_NAME, fontSize=style.TABLE_FONT_SIZE,
+                                  textColor=_rgb(style.TABLE_BODY_TEXT), alignment=0, leading=9)
+
+    wrapped = []
+    for r, row in enumerate(data):
+        wrapped_row = []
+        for c, text in enumerate(row):
+            is_header = r < table.header_rows
+            is_label = c < label_cols
+            ps = header_style if is_header else (label_style if is_label else body_style)
+            wrapped_row.append(Paragraph(text or "", ps))
+        wrapped.append(wrapped_row)
+
+    n_cols = table.n_cols
+    total_width = PAGE_SIZE[0] - 2 * MARGIN
+    label_width = total_width * 0.17 if label_cols == 1 else total_width * 0.26
+    data_col_width = (total_width - label_width) / max(1, n_cols - label_cols)
+    col_widths = [label_width / label_cols] * label_cols + [data_col_width] * (n_cols - label_cols)
+
+    tbl = Table(wrapped, colWidths=col_widths, rowHeights=None)
+
+    cmds = [
+        ("GRID", (0, 0), (-1, -1), 0.4, _rgb(style.TABLE_GRID_LINE)),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 3),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+        ("TOPPADDING", (0, 0), (-1, -1), 2),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+    ]
+    if table.header_rows >= 1:
+        cmds.append(("BACKGROUND", (0, 0), (-1, 0), _rgb(style.TABLE_HEADER_TOP_BG)))
+    if table.header_rows >= 2:
+        cmds.append(("BACKGROUND", (0, 1), (-1, table.header_rows - 1), _rgb(style.TABLE_HEADER_PER_BG)))
+    for r in sorted(table.bold_rows):
+        row_i = r + table.header_rows
+        if 0 <= row_i < table.n_rows:
+            cmds.append(("BACKGROUND", (0, row_i), (-1, row_i), _rgb(style.TABLE_BOLD_ROW_BG)))
+            cmds.append(("BACKGROUND", (0, row_i), (label_cols - 1, row_i), _rgb(style.TABLE_BOLD_ROW_LABEL_BG)))
+    for (r1, c1, r2, c2) in table.merges:
+        if (r1, c1) != (r2, c2):
+            cmds.append(("SPAN", (c1, r1), (c2, r2)))
+
+    tbl.setStyle(TableStyle(cmds))
+    return tbl
+
+
+def _draw_data_page(c: canvas.Canvas, page: ReportPage):
+    page_w, page_h = PAGE_SIZE
+    c.setFillColorRGB(1, 1, 1)
+    c.rect(0, 0, page_w, page_h, fill=1, stroke=0)
+
+    x = MARGIN
+    y = page_h - MARGIN
+
+    # 강조 바 + 제목
+    c.setFillColor(_rgb(style.ACCENT_BAR))
+    c.rect(x, y - 14, 3, 14, fill=1, stroke=0)
+    c.setFillColor(_rgb(style.TITLE_TEXT))
+    c.setFont(style.KOREAN_FONT_BOLD_NAME, style.TITLE_FONT_SIZE)
+    c.drawString(x + 8, y - 11, page.title)
+    y -= 22
+
+    # 인사이트
+    c.setFont(style.KOREAN_FONT_NAME, style.INSIGHT_FONT_SIZE)
+    c.setFillColor(_rgb(style.INSIGHT_TEXT))
+    for line in page.insight_lines:
+        c.drawString(x + 8, y - 9, f"▶ {line}")
+        y -= 15
+
+    # Unit note (우측 정렬, 제목 라인과 동일한 y 부근)
+    if page.unit_note:
+        c.setFont(style.KOREAN_FONT_NAME, style.UNIT_NOTE_FONT_SIZE)
+        c.setFillColor(_rgb(style.UNIT_NOTE_TEXT))
+        c.drawRightString(page_w - MARGIN, y - 9, page.unit_note)
+        y -= 13
+
+    y -= 4
+
+    # 하단 각주/페이지번호 영역 높이 미리 확보
+    footnote_lines = (page.footnote or "").count("\n") + 1 if page.footnote else 0
+    bottom_reserved = 10 + footnote_lines * 9 if page.footnote else 12
+
+    content_top = y
+    content_bottom = MARGIN + bottom_reserved
+    content_height = content_top - content_bottom
+
+    chart_h = 0.0
+    if page.chart_png:
+        img = ImageReader(BytesIO(page.chart_png))
+        iw, ih = img.getSize()
+        avail_w = page_w - 2 * MARGIN
+        chart_h = min(content_height * 0.62, avail_w * ih / iw)
+        chart_w = chart_h * iw / ih
+        if chart_w > avail_w:
+            chart_w = avail_w
+            chart_h = chart_w * ih / iw
+        c.drawImage(img, x + (avail_w - chart_w) / 2, content_top - chart_h, width=chart_w, height=chart_h,
+                    preserveAspectRatio=True, anchor="n")
+
+    if page.table is not None:
+        tbl = _build_table_flowable(page)
+        tw, th = tbl.wrapOn(c, page_w - 2 * MARGIN, content_height)
+        table_y = content_top - chart_h - th
+        if chart_h:
+            table_y -= 6
+        table_y = max(table_y, content_bottom)
+        tbl.drawOn(c, x, table_y)
+
+    # 각주
+    if page.footnote:
+        fy = MARGIN + 4
+        c.setStrokeColor(_rgb(style.TABLE_GRID_LINE))
+        c.line(x, fy + footnote_lines * 9 + 2, page_w - MARGIN, fy + footnote_lines * 9 + 2)
+        c.setFont(style.KOREAN_FONT_NAME, style.FOOTNOTE_FONT_SIZE)
+        c.setFillColor(_rgb(style.FOOTNOTE_TEXT))
+        lines = page.footnote.split("\n")
+        for i, line in enumerate(reversed(lines)):
+            c.drawString(x, fy + i * 9, line.strip())
+
+    # 페이지 번호
+    c.setFont(style.KOREAN_FONT_NAME, style.PAGE_NUM_FONT_SIZE)
+    c.setFillColor(_rgb(style.PAGE_NUM_TEXT))
+    c.drawRightString(page_w - MARGIN, MARGIN - 8, page.page_num)
+
+    c.showPage()
+
+
+def generate_pdf(output_path: str, dashboard_html: str, period: str) -> Path:
+    """대시보드 HTML을 캡처해 PDF 리포트를 생성한다.
+
     Args:
         output_path: 생성할 PDF 파일 경로
+        dashboard_html: build_dashboard()가 방금 만든 대시보드 HTML 경로
         period: 보고 차수 (예: "26년 6차")
-        respondents: 응답자 수
-        metrics_df: 지표 계산 결과 DataFrame
-        banner_names: 배너 이름 리스트 (기본값: 설정에서 자동 감지)
-    
-    Returns:
-        생성된 PDF 파일 경로
     """
-    if banner_names is None:
-        banner_names = ["전체", "동적", "순진", "스위칭", "유지", "T1", "T2", "T3"]
-    
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
-    
-    # PDF 생성
-    doc = SimpleDocTemplate(str(output), pagesize=A4)
-    styles = getSampleStyleSheet()
-    
-    # 커스텀 스타일
-    title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
-        fontSize=24,
-        textColor=colors.HexColor('#008e4e'),
-        spaceAfter=12,
-        alignment=TA_CENTER,
-        fontName='Helvetica-Bold'
-    )
-    
-    heading_style = ParagraphStyle(
-        'CustomHeading',
-        parent=styles['Heading2'],
-        fontSize=14,
-        textColor=colors.HexColor('#008e4e'),
-        spaceAfter=10,
-        spaceBefore=10,
-        fontName='Helvetica-Bold'
-    )
-    
-    normal_style = ParagraphStyle(
-        'Normal',
-        parent=styles['Normal'],
-        fontSize=10,
-        spaceAfter=6,
-        alignment=TA_LEFT,
-    )
-    
-    elements = []
-    
-    # 제목 페이지
-    elements.append(Spacer(1, 1.5 * inch))
-    elements.append(Paragraph("PsO H-Biologics Tracker", title_style))
-    elements.append(Spacer(1, 0.3 * inch))
-    elements.append(Paragraph(f"지표 계산 보고서 ({period})", heading_style))
-    elements.append(Spacer(1, 0.5 * inch))
-    
-    # 기본 정보
-    summary_data = [
-        ["항목", "값"],
-        ["보고 차수", period],
-        ["응답자 수", str(respondents)],
-        ["생성 일시", datetime.now().strftime("%Y년 %m월 %d일 %H:%M:%S")],
-        ["총 지표 수", str(len(metrics_df))],
-    ]
-    summary_table = Table(summary_data, colWidths=[2 * inch, 2 * inch])
-    summary_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#008e4e')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 11),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-    ]))
-    elements.append(summary_table)
-    elements.append(PageBreak())
-    
-    # 배너별 요약
-    elements.append(Paragraph("배너별 요약", heading_style))
-    elements.append(Spacer(1, 0.2 * inch))
-    
-    for banner in banner_names:
-        banner_data = metrics_df[metrics_df["배너조건"] == banner]
-        if banner_data.empty:
-            continue
-        
-        error_count = int((banner_data["오류"] != "").sum())
-        warning_count = int((banner_data["경고"] != "").sum())
-        
-        banner_row = [
-            [banner],
-            [f"지표: {len(banner_data)}개 | 오류: {error_count}개 | 경고: {warning_count}개"],
-        ]
-        elements.append(Paragraph(f"• {banner} 배너", normal_style))
-        elements.append(Spacer(1, 0.1 * inch))
-    
-    elements.append(Spacer(1, 0.2 * inch))
-    elements.append(PageBreak())
-    
-    # 오류 및 경고 요약
-    error_data = metrics_df[metrics_df["오류"] != ""]
-    warning_data = metrics_df[metrics_df["경고"] != ""]
-    
-    if not error_data.empty or not warning_data.empty:
-        elements.append(Paragraph("오류 및 경고", heading_style))
-        elements.append(Spacer(1, 0.2 * inch))
-        
-        if not error_data.empty:
-            elements.append(Paragraph("❌ 계산 오류", normal_style))
-            error_rows = [["항목", "문항", "오류 메시지"]]
-            for _, row in error_data.iterrows():
-                error_rows.append([
-                    str(row.get("항목", ""))[:20],
-                    str(row.get("문항", ""))[:20],
-                    str(row.get("오류", ""))[:40],
-                ])
-            
-            error_table = Table(error_rows, colWidths=[1.5 * inch, 1.5 * inch, 2 * inch])
-            error_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.lightcoral),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, -1), 9),
-                ('GRID', (0, 0), (-1, -1), 1, colors.grey),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
-            ]))
-            elements.append(error_table)
-            elements.append(Spacer(1, 0.3 * inch))
-        
-        if not warning_data.empty:
-            elements.append(Paragraph("⚠️ 계산 경고", normal_style))
-            warning_rows = [["항목", "문항", "경고 메시지"]]
-            for _, row in warning_data.head(15).iterrows():  # 처음 15개만
-                warning_rows.append([
-                    str(row.get("항목", ""))[:20],
-                    str(row.get("문항", ""))[:20],
-                    str(row.get("경고", ""))[:40],
-                ])
-            
-            warning_table = Table(warning_rows, colWidths=[1.5 * inch, 1.5 * inch, 2 * inch])
-            warning_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f0cf7a')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, -1), 9),
-                ('GRID', (0, 0), (-1, -1), 1, colors.grey),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightyellow]),
-            ]))
-            elements.append(warning_table)
-    
-    elements.append(Spacer(1, 0.2 * inch))
-    elements.append(PageBreak())
-    
-    # 상세 결과 (전체 배너만)
-    total_data = metrics_df[metrics_df["배너조건"] == "전체"]
-    if not total_data.empty:
-        elements.append(Paragraph("전체 배너 상세 지표 (상위 30개)", heading_style))
-        elements.append(Spacer(1, 0.2 * inch))
-        
-        detail_rows = [["구분", "항목", "문항", "결과", "경고"]]
-        for _, row in total_data.head(30).iterrows():
-            detail_rows.append([
-                str(row.get("구분", ""))[:10],
-                str(row.get("항목", ""))[:15],
-                str(row.get("문항", ""))[:15],
-                str(row.get("결과", ""))[:10],
-                "⚠️" if row.get("경고") else "✓",
-            ])
-        
-        detail_table = Table(detail_rows, colWidths=[0.8 * inch, 1.2 * inch, 1.2 * inch, 0.8 * inch, 0.5 * inch])
-        detail_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#008e4e')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
-            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0f5ff')]),
-        ]))
-        elements.append(detail_table)
-    
-    # PDF 생성
-    doc.build(elements)
-    
+    style.register_korean_fonts()
+
+    report_date_label = _report_label(period)
+    logger.info("🖨️ PDF 리포트용 장표 캡처 시작 (%s)", period)
+    static_pages = capture_static_pages(dashboard_html, report_date_label)
+    data_pages = collect_report_pages(dashboard_html)
+    logger.info("🖨️ 장표 %d개 캡처 완료, PDF 조립 시작", len(data_pages))
+
+    c = canvas.Canvas(str(output), pagesize=PAGE_SIZE)
+
+    _draw_static_page(c, static_pages["cover"])
+    _draw_static_page(c, static_pages["toc_survey"])
+    _draw_static_page(c, static_pages["overview"])
+    _draw_static_page(c, static_pages["toc_result"])
+    for page in data_pages:
+        _draw_data_page(c, page)
+
+    c.save()
+    logger.info("✅ PDF 리포트 저장 완료: %s", output)
     return output

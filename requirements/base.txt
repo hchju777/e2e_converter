@@ -4,3 +4,4 @@ openpyxl
 reportlab
 python-pptx
 Pillow
+websocket-client
