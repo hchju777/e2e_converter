@@ -1,6 +1,5 @@
 __pycache__
 .venv
-db
 results
 build/
 release/

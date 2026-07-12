@@ -13,6 +13,6 @@
         {"name": "T2", "column": "UCB_Tier", "values": [2]},
         {"name": "T3", "column": "UCB_Tier", "values": [3, 99]}
     ],
-    "dashboard_template": "db/PsO_dashboard_v4 (2).html",
+    "dashboard_template": "db/PsO_dashboard_v4.html",
     "dashboard_output": "results/PsO_dashboard_26년6차.html"
 }

@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 
 import pandas as pd
 
@@ -61,3 +62,13 @@ class BannerFilterTests(unittest.TestCase):
     def test_banner_order_is_validated(self):
         with self.assertRaisesRegex(ValueError, "name과 순서"):
             validate_banner_configs([{"name": "전체"}, {"name": "T1"}])
+
+
+class DashboardImageDownloadTests(unittest.TestCase):
+    def test_dashboard_contains_offline_slide_image_download(self):
+        html = Path("db/PsO_dashboard_v4.html").read_text(encoding="utf-8")
+
+        self.assertIn("installSlideDownloadButtons", html)
+        self.assertIn("downloadSlideImage", html)
+        self.assertIn("장표 이미지 저장", html)
+        self.assertNotIn("html2canvas", html)

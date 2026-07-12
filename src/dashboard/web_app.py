@@ -129,7 +129,8 @@ def get_app_version() -> str:
 def load_web_settings() -> dict:
     settings = load_settings(str(bundled_resource("config/settings.json")))
     settings["spec_path"] = str(bundled_resource("config/metric_spec.csv"))
-    settings["dashboard_template"] = str(bundled_resource("db/PsO_dashboard_v4 (2).html"))
+    # PyInstaller spec도 이 설정값의 상대경로를 그대로 보존해 번들에 포함한다.
+    settings["dashboard_template"] = str(bundled_resource(settings["dashboard_template"]))
     return settings
 
 

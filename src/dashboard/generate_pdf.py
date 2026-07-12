@@ -32,36 +32,43 @@ def _rgb(t: tuple[int, int, int]):
     return colors.Color(t[0] / 255, t[1] / 255, t[2] / 255)
 
 
-def _draw_full_bleed_image(c: canvas.Canvas, png_bytes: bytes):
+def _draw_full_bleed_image(c: canvas.Canvas, png_bytes: bytes, crop_to_fill: bool = False):
     img = ImageReader(BytesIO(png_bytes))
     iw, ih = img.getSize()
     page_w, page_h = PAGE_SIZE
-    scale = min(page_w / iw, page_h / ih)
+    # 표지는 좌우 여백 없이 페이지를 꽉 채우고, 일반 정적 장표는 전체 내용을 보존한다.
+    scale_fn = max if crop_to_fill else min
+    scale = scale_fn(page_w / iw, page_h / ih)
     w, h = iw * scale, ih * scale
     x, y = (page_w - w) / 2, (page_h - h) / 2
     c.drawImage(img, x, y, width=w, height=h)
 
 
-def _draw_static_page(c: canvas.Canvas, png_bytes: bytes):
+def _draw_static_page(c: canvas.Canvas, png_bytes: bytes, crop_to_fill: bool = False):
     c.setFillColorRGB(1, 1, 1)
     c.rect(0, 0, *PAGE_SIZE, fill=1, stroke=0)
-    _draw_full_bleed_image(c, png_bytes)
+    _draw_full_bleed_image(c, png_bytes, crop_to_fill=crop_to_fill)
     c.showPage()
 
 
-def _build_table_flowable(page: ReportPage) -> Table:
+def _build_table_flowable(page: ReportPage, max_height: float | None = None) -> Table:
     table = page.table
     label_cols = label_column_count(table)
     data = [["" for _ in range(table.n_cols)] for _ in range(table.n_rows)]
     for (r, cy), text in table.cells.items():
         data[r][cy] = text.replace("\n", " ")
 
-    header_style = ParagraphStyle("hdr", fontName=style.KOREAN_FONT_BOLD_NAME, fontSize=style.TABLE_HEADER_FONT_SIZE,
-                                   textColor=_rgb(style.TABLE_HEADER_TEXT), alignment=1, leading=9)
-    body_style = ParagraphStyle("body", fontName=style.KOREAN_FONT_NAME, fontSize=style.TABLE_FONT_SIZE,
-                                 textColor=_rgb(style.TABLE_BODY_TEXT), alignment=1, leading=9)
-    label_style = ParagraphStyle("label", fontName=style.KOREAN_FONT_NAME, fontSize=style.TABLE_FONT_SIZE,
-                                  textColor=_rgb(style.TABLE_BODY_TEXT), alignment=0, leading=9)
+    row_height = max_height / table.n_rows if max_height and table.n_rows else None
+    font_size = style.TABLE_FONT_SIZE
+    if row_height is not None:
+        font_size = max(5.5, min(font_size, row_height * 0.42))
+    leading = max(6.0, font_size * 1.15)
+    header_style = ParagraphStyle("hdr", fontName=style.KOREAN_FONT_BOLD_NAME, fontSize=font_size,
+                                   textColor=_rgb(style.TABLE_HEADER_TEXT), alignment=1, leading=leading)
+    body_style = ParagraphStyle("body", fontName=style.KOREAN_FONT_NAME, fontSize=font_size,
+                                 textColor=_rgb(style.TABLE_BODY_TEXT), alignment=1, leading=leading)
+    label_style = ParagraphStyle("label", fontName=style.KOREAN_FONT_NAME, fontSize=font_size,
+                                  textColor=_rgb(style.TABLE_BODY_TEXT), alignment=0, leading=leading)
 
     wrapped = []
     for r, row in enumerate(data):
@@ -79,7 +86,8 @@ def _build_table_flowable(page: ReportPage) -> Table:
     data_col_width = (total_width - label_width) / max(1, n_cols - label_cols)
     col_widths = [label_width / label_cols] * label_cols + [data_col_width] * (n_cols - label_cols)
 
-    tbl = Table(wrapped, colWidths=col_widths, rowHeights=None)
+    row_heights = [row_height] * table.n_rows if row_height is not None else None
+    tbl = Table(wrapped, colWidths=col_widths, rowHeights=row_heights)
 
     cmds = [
         ("GRID", (0, 0), (-1, -1), 0.4, _rgb(style.TABLE_GRID_LINE)),
@@ -146,12 +154,17 @@ def _draw_data_page(c: canvas.Canvas, page: ReportPage):
     content_bottom = MARGIN + bottom_reserved
     content_height = content_top - content_bottom
 
+    table_h = 0.0
+    if page.table is not None:
+        preferred_table_h = page.table.n_rows * 0.22 * inch
+        table_h = min(preferred_table_h, content_height * (0.48 if page.chart_png else 1.0))
+
     chart_h = 0.0
     if page.chart_png:
         img = ImageReader(BytesIO(page.chart_png))
         iw, ih = img.getSize()
         avail_w = page_w - 2 * MARGIN
-        chart_h = min(content_height * 0.62, avail_w * ih / iw)
+        chart_h = min(max(0, content_height - table_h - 6), avail_w * ih / iw)
         chart_w = chart_h * iw / ih
         if chart_w > avail_w:
             chart_w = avail_w
@@ -160,8 +173,8 @@ def _draw_data_page(c: canvas.Canvas, page: ReportPage):
                     preserveAspectRatio=True, anchor="n")
 
     if page.table is not None:
-        tbl = _build_table_flowable(page)
-        tw, th = tbl.wrapOn(c, page_w - 2 * MARGIN, content_height)
+        tbl = _build_table_flowable(page, table_h)
+        tw, th = tbl.wrapOn(c, page_w - 2 * MARGIN, table_h)
         table_y = content_top - chart_h - th
         if chart_h:
             table_y -= 6
@@ -207,7 +220,7 @@ def generate_pdf(output_path: str, dashboard_html: str, period: str) -> Path:
 
     c = canvas.Canvas(str(output), pagesize=PAGE_SIZE)
 
-    _draw_static_page(c, static_pages["cover"])
+    _draw_static_page(c, static_pages["cover"], crop_to_fill=True)
     _draw_static_page(c, static_pages["toc_survey"])
     _draw_static_page(c, static_pages["overview"])
     _draw_static_page(c, static_pages["toc_result"])

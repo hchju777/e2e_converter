@@ -7,16 +7,14 @@
 
 from io import BytesIO
 from pathlib import Path
-from xml.sax.saxutils import escape as xml_escape
-
-from lxml import etree
 from PIL import Image
 from pptx import Presentation
 from pptx.chart.data import CategoryChartData
 from pptx.dml.color import RGBColor
-from pptx.enum.chart import XL_CHART_TYPE, XL_LEGEND_POSITION
+from pptx.enum.chart import XL_CHART_TYPE, XL_LEGEND_POSITION, XL_MARKER_STYLE, XL_TICK_LABEL_POSITION
 from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
-from pptx.oxml.ns import qn
+from pptx.oxml import parse_xml
+from pptx.oxml.ns import nsdecls
 from pptx.util import Emu, Pt
 
 from src.dashboard import report_style as style
@@ -63,22 +61,19 @@ def _set_run(run, text, size, color, bold=False):
     run.font.name = KOREAN_FONT
 
 
-def _add_full_bleed_picture(slide, png_bytes: bytes):
+def _add_full_bleed_picture(slide, png_bytes: bytes, crop_to_fill: bool = False):
     img = Image.open(BytesIO(png_bytes))
     iw, ih = img.size
-    scale = min(PAGE_W / iw, PAGE_H / ih)
+    scale_fn = max if crop_to_fill else min
+    scale = scale_fn(PAGE_W / iw, PAGE_H / ih)
     w, h = int(iw * scale), int(ih * scale)
     x, y = (PAGE_W - w) // 2, (PAGE_H - h) // 2
     slide.shapes.add_picture(BytesIO(png_bytes), x, y, width=w, height=h)
 
 
-def _add_static_slide(prs: Presentation, png_bytes: bytes):
+def _add_static_slide(prs: Presentation, png_bytes: bytes, crop_to_fill: bool = False):
     slide = prs.slides.add_slide(prs.slide_layouts[6])
-    _add_full_bleed_picture(slide, png_bytes)
-
-
-C_NS = "http://schemas.openxmlformats.org/drawingml/2006/chart"
-A_NS = "http://schemas.openxmlformats.org/drawingml/2006/main"
+    _add_full_bleed_picture(slide, png_bytes, crop_to_fill=crop_to_fill)
 
 
 def _hex(color: str) -> str:
@@ -117,106 +112,77 @@ def _add_native_chart(slide, chart_data: ChartData, left, top, width, height):
 
     if line_series:
         try:
-            _add_secondary_line_series(chart, line_series, chart_data.categories)
+            _add_secondary_line_chart(slide, line_series, chart_data.categories, left, top, width, height)
         except Exception:
             logger.exception("⚠️ 보조축 꺾은선 계열 추가 실패 — 막대 차트만 유지합니다")
 
     return graphic_frame
 
 
-def _add_secondary_line_series(chart, line_series: list, categories: list[str]):
-    """이미 만들어진 누적 막대 차트에, 보조축을 쓰는 꺾은선 계열을 XML로 직접 추가한다.
+def _add_secondary_line_chart(slide, line_series: list, categories: list[str], left, top, width, height):
+    """편집 가능한 투명 꺾은선 차트를 막대 차트 위에 배치한다.
 
-    python-pptx는 콤보(막대+꺾은선) 차트를 공개 API로 지원하지 않아, OOXML의
-    표준 콤보 차트 구조(보조 값축 + 숨겨진 보조 항목축)를 그대로 만들어 삽입한다.
+    콤보 차트를 만들기 위한 OOXML 직접 삽입은 PowerPoint 복구를 유발할 수 있으므로
+    python-pptx가 보장하는 정식 차트 객체 두 개를 사용한다.
     """
+    line_data = CategoryChartData()
+    line_data.categories = categories
+    for series in line_series:
+        line_data.add_series(series.label, [value if value is not None else 0 for value in series.values])
+
+    frame = slide.shapes.add_chart(XL_CHART_TYPE.LINE_MARKERS, left, top, width, height, line_data)
+    line_chart = frame.chart
+    line_chart.has_legend = False
+    _make_chart_background_transparent(line_chart)
+    line_chart.category_axis.tick_label_position = XL_TICK_LABEL_POSITION.NONE
+    line_chart.category_axis.format.line.fill.background()
+    line_chart.value_axis.tick_label_position = XL_TICK_LABEL_POSITION.NONE
+    line_chart.value_axis.format.line.fill.background()
+    line_chart.value_axis.has_major_gridlines = False
+    line_chart.value_axis.minimum_scale = 0
+    line_chart.value_axis.maximum_scale = 100
+
+    for native_series, source in zip(line_chart.series, line_series):
+        color = RGBColor.from_string(_hex(source.color))
+        native_series.format.line.color.rgb = color
+        native_series.format.line.width = Pt(1.5)
+        native_series.marker.style = XL_MARKER_STYLE.CIRCLE
+        native_series.marker.size = 5
+        native_series.marker.format.fill.solid()
+        native_series.marker.format.fill.fore_color.rgb = color
+        native_series.marker.format.line.color.rgb = color
+
+    return frame
+
+
+def _make_chart_background_transparent(chart) -> None:
+    """차트 영역과 플롯 영역에 표준 noFill을 적용한다."""
     chart_space = chart._chartSpace
-    plot_area = chart_space.find(f".//{{{C_NS}}}plotArea")
-    bar_chart_el = plot_area.find(f"{{{C_NS}}}barChart")
-    primary_cat_ax = plot_area.find(f"{{{C_NS}}}catAx")
-    primary_val_ax = plot_area.find(f"{{{C_NS}}}valAx")
-    primary_cat_ax_id = primary_cat_ax.find(f"{{{C_NS}}}axId").get("val")
-    primary_val_ax_id = primary_val_ax.find(f"{{{C_NS}}}axId").get("val")
-
-    secondary_cat_ax_id = str(int(primary_cat_ax_id) + 1)
-    secondary_val_ax_id = str(int(primary_val_ax_id) + 1)
-
-    n = len(categories)
-    cat_pts = "".join(
-        f'<c:pt idx="{i}"><c:v>{xml_escape(str(cat))}</c:v></c:pt>' for i, cat in enumerate(categories)
+    chart_element = chart_space.chart
+    sp_pr = parse_xml(
+        f'<c:spPr {nsdecls("c", "a")}><a:noFill/><a:ln><a:noFill/></a:ln></c:spPr>'
     )
-    series_xml = []
-    for idx, s in enumerate(line_series):
-        color = _hex(s.color)
-        val_pts = "".join(
-            f'<c:pt idx="{i}"><c:v>{v}</c:v></c:pt>' for i, v in enumerate(s.values) if v is not None
-        )
-        series_xml.append(f"""
-        <c:ser xmlns:c="{C_NS}" xmlns:a="{A_NS}">
-          <c:idx val="{idx}"/>
-          <c:order val="{idx}"/>
-          <c:tx><c:v>{xml_escape(s.label)}</c:v></c:tx>
-          <c:spPr><a:ln w="19050"><a:solidFill><a:srgbClr val="{color}"/></a:solidFill></a:ln></c:spPr>
-          <c:marker><c:symbol val="circle"/><c:size val="5"/>
-            <c:spPr><a:solidFill><a:srgbClr val="{color}"/></a:solidFill></c:spPr>
-          </c:marker>
-          <c:cat><c:strRef><c:f>Sheet1!$A$2:$A${n + 1}</c:f>
-            <c:strCache><c:ptCount val="{n}"/>{cat_pts}</c:strCache></c:strRef></c:cat>
-          <c:val><c:numRef><c:f>Sheet1!$B$2:$B${n + 1}</c:f>
-            <c:numCache><c:formatCode>General</c:formatCode><c:ptCount val="{n}"/>{val_pts}</c:numCache></c:numRef></c:val>
-          <c:smooth val="0"/>
-        </c:ser>
-        """)
+    chart_element.addnext(sp_pr)
 
-    line_chart_xml = f"""
-    <c:lineChart xmlns:c="{C_NS}">
-      <c:grouping val="standard"/>
-      <c:varyColors val="0"/>
-      {''.join(series_xml)}
-      <c:marker val="1"/>
-      <c:axId val="{secondary_cat_ax_id}"/>
-      <c:axId val="{secondary_val_ax_id}"/>
-    </c:lineChart>
-    """
-    line_chart_el = etree.fromstring(line_chart_xml)
-    bar_chart_el.addnext(line_chart_el)
+    plot_area = chart_element.plotArea
+    plot_sp_pr = parse_xml(
+        f'<c:spPr {nsdecls("c", "a")}><a:noFill/><a:ln><a:noFill/></a:ln></c:spPr>'
+    )
+    plot_area.append(plot_sp_pr)
 
-    secondary_val_ax_xml = f"""
-    <c:valAx xmlns:c="{C_NS}">
-      <c:axId val="{secondary_val_ax_id}"/>
-      <c:scaling><c:orientation val="minMax"/></c:scaling>
-      <c:delete val="0"/>
-      <c:axPos val="r"/>
-      <c:numFmt formatCode="0.0&quot;%&quot;" sourceLinked="0"/>
-      <c:majorTickMark val="out"/>
-      <c:minorTickMark val="none"/>
-      <c:tickLblPos val="nextTo"/>
-      <c:txPr><a:bodyPr xmlns:a="{A_NS}"/><a:lstStyle xmlns:a="{A_NS}"/>
-        <a:p xmlns:a="{A_NS}"><a:pPr><a:defRPr sz="700"/></a:pPr><a:endParaRPr lang="ko-KR"/></a:p>
-      </c:txPr>
-      <c:crossAx val="{secondary_cat_ax_id}"/>
-      <c:crosses val="max"/>
-    </c:valAx>
-    """
-    secondary_cat_ax_xml = f"""
-    <c:catAx xmlns:c="{C_NS}">
-      <c:axId val="{secondary_cat_ax_id}"/>
-      <c:scaling><c:orientation val="minMax"/></c:scaling>
-      <c:delete val="1"/>
-      <c:axPos val="b"/>
-      <c:majorTickMark val="out"/>
-      <c:minorTickMark val="none"/>
-      <c:tickLblPos val="nextTo"/>
-      <c:crossAx val="{secondary_val_ax_id}"/>
-      <c:crosses val="autoZero"/>
-      <c:auto val="1"/>
-      <c:lblAlgn val="ctr"/>
-      <c:lblOffset val="100"/>
-      <c:noMultiLvlLbl val="0"/>
-    </c:catAx>
-    """
-    primary_val_ax.addnext(etree.fromstring(secondary_cat_ax_xml))
-    primary_val_ax.addnext(etree.fromstring(secondary_val_ax_xml))
+
+def _table_height_for(page: ReportPage, available: Emu, has_chart: bool) -> Emu:
+    """행 수에 맞춰 표 높이를 정하되 차트와 함께 가용 영역을 넘지 않게 한다."""
+    n_rows = page.table.n_rows if page.table else 0
+    if not n_rows:
+        return Emu(0)
+    preferred = Emu(int(n_rows * 0.22 * EMU_PER_IN))
+    if has_chart:
+        # 차트가 있는 장표는 표가 콘텐츠 영역의 절반 이상을 선점하지 않게 한다.
+        limit = Emu(int(available * 0.48))
+    else:
+        limit = available
+    return min(preferred, limit)
 
 
 def _build_table(slide, page: ReportPage, top: Emu, height: Emu) -> Emu:
@@ -231,9 +197,12 @@ def _build_table(slide, page: ReportPage, top: Emu, height: Emu) -> Emu:
     data_col_w = (total_width - label_total_w) // max(1, n_cols - label_cols)
     label_col_w = label_total_w // label_cols
 
-    row_h = max(Emu(int(0.22 * EMU_PER_IN)), Emu(int(height / n_rows))) if n_rows else Emu(0)
-    row_h = min(row_h, Emu(int(0.26 * EMU_PER_IN)))
+    # 전달받은 영역 안에 모든 행이 반드시 들어가도록 한다. 기존의 최소 0.22in
+    # 강제는 행이 많은 표를 슬라이드 밖으로 밀어내거나 차트와 겹치게 했다.
+    row_h = Emu(int(height / n_rows)) if n_rows else Emu(0)
     table_height = row_h * n_rows
+    row_height_in = row_h / EMU_PER_IN
+    font_size = max(5.5, min(style.TABLE_FONT_SIZE, row_height_in * 30))
 
     gframe = slide.shapes.add_table(n_rows, n_cols, MARGIN, top, total_width, table_height)
     tbl = gframe.table
@@ -256,7 +225,7 @@ def _build_table(slide, page: ReportPage, top: Emu, height: Emu) -> Emu:
         for para in cell.text_frame.paragraphs:
             para.alignment = PP_ALIGN.LEFT if is_label else PP_ALIGN.CENTER
             for run in para.runs:
-                run.font.size = Pt(style.TABLE_FONT_SIZE)
+                run.font.size = Pt(font_size)
                 run.font.name = KOREAN_FONT
                 if is_header:
                     run.font.bold = True
@@ -301,12 +270,13 @@ def _add_data_slide(prs: Presentation, page: ReportPage):
 
     # 인사이트
     if page.insight_lines:
+        insight_height = Emu(int((0.02 + 0.19 * len(page.insight_lines)) * EMU_PER_IN))
         _, tf = _add_textbox(slide, x + Emu(int(0.12 * EMU_PER_IN)), y, PAGE_W - 2 * MARGIN,
-                                    Emu(int(0.02 + 0.19 * len(page.insight_lines)) * EMU_PER_IN))
+                                    insight_height)
         for i, line in enumerate(page.insight_lines):
             p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
             _set_run(p.add_run(), f"▶ {line}", style.INSIGHT_FONT_SIZE, style.INSIGHT_TEXT)
-        y += Emu(int(0.02 + 0.19 * len(page.insight_lines)) * EMU_PER_IN)
+        y += insight_height
 
     # Unit note
     if page.unit_note:
@@ -322,12 +292,15 @@ def _add_data_slide(prs: Presentation, page: ReportPage):
     content_bottom = PAGE_H - MARGIN - bottom_reserved
     content_height = content_bottom - y
 
+    gap = Emu(int(0.06 * EMU_PER_IN))
+    table_h = _table_height_for(page, content_height, bool(page.chart_png))
     chart_h = Emu(0)
     if page.chart_png:
         img = Image.open(BytesIO(page.chart_png))
         iw, ih = img.size
         avail_w = PAGE_W - 2 * MARGIN
-        chart_h = min(Emu(int(content_height * 0.62)), Emu(int(avail_w * ih / iw)))
+        chart_available = max(Emu(0), content_height - table_h - gap)
+        chart_h = min(chart_available, Emu(int(avail_w * ih / iw)))
         chart_w = Emu(int(chart_h * iw / ih))
         if chart_w > avail_w:
             chart_w = avail_w
@@ -342,11 +315,11 @@ def _add_data_slide(prs: Presentation, page: ReportPage):
                 slide.shapes.add_picture(BytesIO(page.chart_png), chart_x, y, width=chart_w, height=chart_h)
         else:
             slide.shapes.add_picture(BytesIO(page.chart_png), chart_x, y, width=chart_w, height=chart_h)
-        y += chart_h + Emu(int(0.06 * EMU_PER_IN))
+        y += chart_h + gap
 
     if page.table is not None:
-        remaining = content_bottom - y
-        _build_table(slide, page, y, remaining)
+        remaining = max(Emu(0), content_bottom - y)
+        _build_table(slide, page, y, min(table_h, remaining))
 
     # 각주
     if page.footnote:
@@ -383,7 +356,7 @@ def generate_pptx(output_path: str, dashboard_html: str, period: str) -> Path:
     prs.slide_width = PAGE_W
     prs.slide_height = PAGE_H
 
-    _add_static_slide(prs, static_pages["cover"])
+    _add_static_slide(prs, static_pages["cover"], crop_to_fill=True)
     _add_static_slide(prs, static_pages["toc_survey"])
     _add_static_slide(prs, static_pages["overview"])
     _add_static_slide(prs, static_pages["toc_result"])
