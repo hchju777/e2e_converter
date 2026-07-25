@@ -222,20 +222,122 @@ def add_period(html: str, period: str, index: int) -> str:
     return re.sub(r"const\s+LATEST_IDX\s*=\s*\d+\s*;", f"const LATEST_IDX = {index};", html, count=1)
 
 
-def build_dashboard(template_path: str, output_path: str, period: str, banner_values: dict[str, list]) -> Path:
+def read_overview(template_path: str) -> dict:
+    """템플릿의 조사 설계 기본값(OVERVIEW 상수)을 읽어 반환한다."""
+    html = Path(template_path).read_text(encoding="utf-8")
+    return read_json_constant(html, "OVERVIEW")
+
+
+DATA_CONSTANTS = [
+    "P5_RESP", "P5_DATA", "P11_DATA", "P11B_DATA", "P12_DATA", "P12B_DATA",
+    "P13_DATA", "BRAND_DATA", "BRAND_BANNER_DATA", "BRAND_TABLE_DATA",
+    "SOV_DATA", "SOV_BANNER_DATA", "SOV_TABLE_DATA",
+]
+
+
+def clear_wave_data(node) -> None:
+    """중첩 구조는 그대로 두고 차수 값이 담긴 말단 배열만 비운다.
+
+    템플릿에서 구조(어떤 배너·세그먼트·브랜드 키가 있는지)만 빌려오고 값은 모두
+    버리기 위한 것이다. 덕분에 템플릿 HTML을 직접 편집하지 않고도 히스토리를
+    엑셀 한 곳에서만 관리할 수 있다.
+    """
+    if isinstance(node, dict):
+        for value in node.values():
+            clear_wave_data(value)
+    elif isinstance(node, list):
+        if node and isinstance(node[0], list):
+            for value in node:
+                clear_wave_data(value)
+        else:
+            node.clear()
+
+
+def replace_periods(html: str, periods: list[str]) -> str:
+    """PERIODS_ASC와 LATEST_IDX를 주어진 차수 목록으로 통째로 교체한다."""
+    pattern = re.compile(r"(const\s+PERIODS_ASC\s*=\s*\[)(.*?)(\]\s*;)", re.DOTALL)
+    match = pattern.search(html)
+    if not match:
+        raise ValueError("PERIODS_ASC 선언을 찾을 수 없습니다.")
+    items = "".join(
+        f"  {{key:'{period}', label:'{_period_label(period)}', idx:{index}}},\n"
+        for index, period in enumerate(periods)
+    )
+    html = (
+        html[: match.start()]
+        + match.group(1) + "\n" + items + match.group(3)
+        + html[match.end() :]
+    )
+    return re.sub(
+        r"const\s+LATEST_IDX\s*=\s*\d+\s*;",
+        f"const LATEST_IDX = {len(periods) - 1};",
+        html,
+        count=1,
+    )
+
+
+def build_dashboard_from_history(
+    template_path: str,
+    output_path: str,
+    periods: list[str],
+    period_values: dict[str, dict[str, list]],
+    overview: dict | None = None,
+) -> Path:
+    """템플릿의 하드코딩 데이터를 버리고, 주어진 모든 차수로 대시보드를 다시 만든다.
+
+    periods는 시간 순서, period_values는 {차수: {배너: 지표값 리스트}} 형태다.
+    """
     template = Path(template_path)
     logger.info("🎨 대시보드 템플릿 읽는 중: %s", template)
     html = template.read_text(encoding="utf-8")
-    names = [
-        "P5_RESP", "P5_DATA", "P11_DATA", "P11B_DATA", "P12_DATA", "P12B_DATA",
-        "P13_DATA", "BRAND_DATA", "BRAND_BANNER_DATA", "BRAND_TABLE_DATA",
-        "SOV_DATA", "SOV_BANNER_DATA", "SOV_TABLE_DATA",
-    ]
-    data = {name: read_json_constant(html, name) for name in names}
+    if overview is not None:
+        logger.info("📝 조사 설계 값 주입 중")
+        html = replace_json_constant(html, "OVERVIEW", overview)
+
+    data = {name: read_json_constant(html, name) for name in DATA_CONSTANTS}
+    for name in DATA_CONSTANTS:
+        clear_wave_data(data[name])
+
+    logger.info("📈 %d개 차수로 대시보드 데이터 재구성 중: %s ~ %s", len(periods), periods[0], periods[-1])
+    for period in periods:
+        append_dashboard_wave(data, period_values[period])
+
+    for name in DATA_CONSTANTS:
+        html = replace_json_constant(html, name, data[name])
+    html = replace_periods(html, periods)
+    html = html.replace("Apr. 2026", _report_label(periods[-1]))
+    html = re.sub(
+        r"</script>\s*</script>\s*</html>\s*$",
+        "</script>\n</body>\n</html>\n",
+        html,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(html, encoding="utf-8")
+    return output
+
+
+def build_dashboard(
+    template_path: str,
+    output_path: str,
+    period: str,
+    banner_values: dict[str, list],
+    overview: dict | None = None,
+) -> Path:
+    template = Path(template_path)
+    logger.info("🎨 대시보드 템플릿 읽는 중: %s", template)
+    html = template.read_text(encoding="utf-8")
+    if overview is not None:
+        logger.info("📝 조사 설계 값 주입 중")
+        html = replace_json_constant(html, "OVERVIEW", overview)
+    data = {name: read_json_constant(html, name) for name in DATA_CONSTANTS}
     period_index = len(data["P5_RESP"]["전체"])
     logger.info("📈 새 Wave 추가 중: %s (index=%d)", period, period_index)
     append_dashboard_wave(data, banner_values)
-    for name in names:
+    for name in DATA_CONSTANTS:
         html = replace_json_constant(html, name, data[name])
     html = add_period(html, period, period_index)
     html = html.replace("Apr. 2026", _report_label(period))

@@ -5,9 +5,11 @@
 읽어온 계열 데이터(chart_data)로 네이티브 차트를 그린다.
 """
 
+import math
+from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageFont
 from pptx import Presentation
 from pptx.chart.data import CategoryChartData
 from pptx.dml.color import RGBColor
@@ -39,8 +41,45 @@ PAGE_H = Emu(int(style.PAGE_HEIGHT_IN * EMU_PER_IN))
 MARGIN = Emu(int(style.MARGIN_IN * EMU_PER_IN))
 
 
+# 표/차트와 각주 사이에 반드시 두는 간격. 0이면 표 아래 테두리에 각주가 붙어 겹쳐 보인다.
+FOOTNOTE_GAP = Emu(int(0.14 * EMU_PER_IN))
+# 파워포인트는 글자가 들어갈 높이보다 낮은 행을 그리지 못하고 행을 늘려 버린다.
+# 그러면 표가 아래로 넘쳐 각주를 덮으므로, 행 높이에 맞춰 글자 크기를 먼저 줄인다.
+KOREAN_LINE_HEIGHT = 1.33  # 맑은 고딕 기준 줄 높이 배수
+MIN_TABLE_FONT_SIZE = 5.0
+_MEASURE_FONT_SIZE = 100
+
+
 def _rgb(t: tuple[int, int, int]) -> RGBColor:
     return RGBColor(*t)
+
+
+@lru_cache(maxsize=1)
+def _measure_font():
+    """글자 폭을 재는 용도의 폰트. 없으면 None(어림 계산으로 대체)."""
+    try:
+        return ImageFont.truetype(str(style.KOREAN_FONT_REGULAR_PATH), _MEASURE_FONT_SIZE)
+    except OSError:
+        logger.warning("⚠️ 맑은 고딕을 열지 못해 각주 줄 수를 어림 계산합니다")
+        return None
+
+
+def _text_width_in(text: str, font_pt: float) -> float:
+    font = _measure_font()
+    if font is None:
+        return len(text) * font_pt / 72  # 한글 한 글자를 폰트 크기만큼으로 어림한다
+    return font.getlength(text) / _MEASURE_FONT_SIZE * font_pt / 72
+
+
+def _wrapped_line_count(text: str, width_in: float, font_pt: float) -> int:
+    """주어진 폭에서 텍스트가 실제로 몇 줄로 접히는지 센다."""
+    if not text or width_in <= 0:
+        return 0
+    lines = 0
+    for raw_line in text.split("\n"):
+        width = _text_width_in(raw_line.strip(), font_pt)
+        lines += max(1, math.ceil(width / width_in))
+    return lines
 
 
 
@@ -185,6 +224,57 @@ def _table_height_for(page: ReportPage, available: Emu, has_chart: bool) -> Emu:
     return min(preferred, limit)
 
 
+def _cell_spans(table_data) -> dict[tuple[int, int], tuple[int, int]]:
+    """병합된 칸의 (colspan, rowspan)을 모은다. 병합 칸은 그만큼 넓고 높아 글이 덜 접힌다."""
+    spans: dict[tuple[int, int], tuple[int, int]] = {}
+    for (r1, c1, r2, c2) in table_data.merges:
+        spans[(r1, c1)] = (c2 - c1 + 1, r2 - r1 + 1)
+    return spans
+
+
+def _row_line_counts(table_data, col_widths, spans, font_pt: float) -> list[int]:
+    """글자 크기를 정했을 때 각 행이 몇 줄을 차지하는지 센다."""
+    h_margin_in = 2 * 18000 / EMU_PER_IN
+    lines_per_row = [1] * table_data.n_rows
+    for (r, c), text in table_data.cells.items():
+        content = text.replace("\n", " ").strip()
+        if not content:
+            continue
+        colspan, rowspan = spans.get((r, c), (1, 1))
+        width_in = sum(col_widths[c : c + colspan]) / EMU_PER_IN - h_margin_in
+        if width_in <= 0:
+            continue
+        lines = max(1, math.ceil(_text_width_in(content, font_pt) / width_in))
+        # 세로로 병합된 칸은 여러 행에 걸쳐 있으므로 행마다 필요한 줄은 그만큼 적다.
+        per_row = max(1, math.ceil(lines / rowspan))
+        for offset in range(rowspan):
+            if r + offset < len(lines_per_row):
+                lines_per_row[r + offset] = max(lines_per_row[r + offset], per_row)
+    return lines_per_row
+
+
+def _fit_table_font(table_data, col_widths, spans, height: Emu):
+    """표 전체가 height 안에 들어가는 글자 크기·여백·행별 줄 수를 찾는다."""
+    for step in range(0, 21):  # 7.5pt에서 0.125pt씩 낮추며 맞는 크기를 찾는다
+        font_pt = style.TABLE_FONT_SIZE - step * 0.125
+        if font_pt < MIN_TABLE_FONT_SIZE:
+            break
+        for v_margin in (Emu(4000), Emu(0)):
+            row_lines = _row_line_counts(table_data, col_widths, spans, font_pt)
+            line_h = font_pt * KOREAN_LINE_HEIGHT / 72 * EMU_PER_IN
+            total = sum(lines * line_h + 2 * int(v_margin) for lines in row_lines)
+            if total <= int(height):
+                return font_pt, v_margin, row_lines
+
+    # 아무리 줄여도 안 들어가면 최소 크기로 그리고 알린다(표가 잘리는 편이 겹치는 것보다 낫다).
+    row_lines = _row_line_counts(table_data, col_widths, spans, MIN_TABLE_FONT_SIZE)
+    logger.warning(
+        "⚠️ 표가 너무 길어 %.1fpt로도 영역에 맞추지 못했습니다 (%d행)",
+        MIN_TABLE_FONT_SIZE, table_data.n_rows,
+    )
+    return MIN_TABLE_FONT_SIZE, Emu(0), row_lines
+
+
 def _build_table(slide, page: ReportPage, top: Emu, height: Emu) -> Emu:
     """표를 그리고 실제로 차지한 높이를 반환한다."""
     table_data = page.table
@@ -197,27 +287,35 @@ def _build_table(slide, page: ReportPage, top: Emu, height: Emu) -> Emu:
     data_col_w = (total_width - label_total_w) // max(1, n_cols - label_cols)
     label_col_w = label_total_w // label_cols
 
-    # 전달받은 영역 안에 모든 행이 반드시 들어가도록 한다. 기존의 최소 0.22in
-    # 강제는 행이 많은 표를 슬라이드 밖으로 밀어내거나 차트와 겹치게 했다.
-    row_h = Emu(int(height / n_rows)) if n_rows else Emu(0)
-    table_height = row_h * n_rows
-    row_height_in = row_h / EMU_PER_IN
-    font_size = max(5.5, min(style.TABLE_FONT_SIZE, row_height_in * 30))
+    col_widths = [label_col_w if c < label_cols else data_col_w for c in range(n_cols)]
+    spans = _cell_spans(table_data)
+
+    # 파워포인트는 글자가 들어갈 높이보다 낮은 행을 그리지 못하고 행을 늘려 버린다.
+    # 그러면 표가 아래로 넘쳐 각주를 덮으므로, 긴 글이 접히는 줄 수까지 계산해
+    # 표 전체가 주어진 높이 안에 확실히 들어가는 글자 크기를 먼저 찾는다.
+    font_size, v_margin, row_lines = _fit_table_font(table_data, col_widths, spans, height)
+
+    line_h = Emu(int(font_size * KOREAN_LINE_HEIGHT / 72 * EMU_PER_IN))
+    row_heights = [Emu(int(lines * line_h + 2 * v_margin)) for lines in row_lines]
+    # 남는 공간은 모든 행에 고르게 나눠 표가 영역을 자연스럽게 채우게 한다.
+    slack = int(height) - sum(int(h) for h in row_heights)
+    if slack > 0:
+        share = slack // n_rows
+        row_heights = [Emu(int(h) + share) for h in row_heights]
+    table_height = Emu(sum(int(h) for h in row_heights))
 
     gframe = slide.shapes.add_table(n_rows, n_cols, MARGIN, top, total_width, table_height)
     tbl = gframe.table
-    for c in range(label_cols):
-        tbl.columns[c].width = label_col_w
-    for c in range(label_cols, n_cols):
-        tbl.columns[c].width = data_col_w
+    for c in range(n_cols):
+        tbl.columns[c].width = col_widths[c]
     for r in range(n_rows):
-        tbl.rows[r].height = row_h
+        tbl.rows[r].height = row_heights[r]
 
     for (r, c), text in table_data.cells.items():
         cell = tbl.cell(r, c)
         cell.text = text.replace("\n", " ")
         cell.margin_left = cell.margin_right = Emu(18000)
-        cell.margin_top = cell.margin_bottom = Emu(4000)
+        cell.margin_top = cell.margin_bottom = v_margin
         cell.vertical_anchor = MSO_ANCHOR.MIDDLE
         is_header = r < table_data.header_rows
         is_bold_row = (r - table_data.header_rows) in table_data.bold_rows
@@ -288,8 +386,13 @@ def _add_data_slide(prs: Presentation, page: ReportPage):
     y += Emu(int(0.04 * EMU_PER_IN))
 
     footnote_lines = (page.footnote or "").split("\n") if page.footnote else []
-    bottom_reserved = Emu(int((0.14 + 0.11 * len(footnote_lines)) * EMU_PER_IN))
-    content_bottom = PAGE_H - MARGIN - bottom_reserved
+    # 각주는 슬라이드 폭에 맞춰 접히므로, 줄바꿈 문자 수가 아니라 실제로 그려질 줄 수로 자리를 잡는다.
+    text_width_in = (PAGE_W - 2 * MARGIN) / EMU_PER_IN
+    visual_lines = _wrapped_line_count(page.footnote or "", text_width_in, style.FOOTNOTE_FONT_SIZE)
+    bottom_reserved = Emu(int((0.10 + 0.13 * visual_lines) * EMU_PER_IN))
+    footnote_top = PAGE_H - MARGIN - bottom_reserved
+    # 표/차트가 각주에 닿지 않도록 사이에 간격을 둔다.
+    content_bottom = footnote_top - (FOOTNOTE_GAP if page.footnote else Emu(0))
     content_height = content_bottom - y
 
     gap = Emu(int(0.06 * EMU_PER_IN))
@@ -323,7 +426,7 @@ def _add_data_slide(prs: Presentation, page: ReportPage):
 
     # 각주
     if page.footnote:
-        _, tf = _add_textbox(slide, x, content_bottom, PAGE_W - 2 * MARGIN, bottom_reserved)
+        _, tf = _add_textbox(slide, x, footnote_top, PAGE_W - 2 * MARGIN, bottom_reserved)
         for i, line in enumerate(footnote_lines):
             p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
             _set_run(p.add_run(), line.strip(), style.FOOTNOTE_FONT_SIZE, style.FOOTNOTE_TEXT)

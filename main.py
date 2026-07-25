@@ -94,11 +94,13 @@ def run_sav_info():
 
 def print_usage():
     """사용 방법 출력"""
-    print("""
-PsO Dashboard Converter v1.0.0
+    from src import __version__
+
+    print(f"""
+PsO Dashboard Converter v{__version__}
 
 사용 방법:
-  python main.py web                         웹 애플리케이션 실행
+  python main.py web                         웹 애플리케이션 실행 (엑셀 + SAV 업로드)
   python main.py calc [--banner] [--config] 지표 계산 및 대시보드 생성
   python main.py sav-info                    SAV 파일 정보 출력
   python main.py -h, --help                  도움말 출력

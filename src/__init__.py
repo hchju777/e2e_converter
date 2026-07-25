@@ -1,6 +1,18 @@
-"""e2e_converter: SPSS SAV 데이터를 읽고 지표를 계산해 HTML/CSV로 변환하는 도구"""
+"""e2e_converter: 과거 데이터 엑셀과 SPSS SAV를 읽어 대시보드·리포트를 만드는 도구"""
 
-__version__ = "1.0.0"
+from pathlib import Path
+
+
+def _read_version() -> str:
+    """버전은 config/VERSION 한 곳에서만 관리한다(EXE 파일명·화면 표기와 같은 값)."""
+    version_file = Path(__file__).resolve().parent.parent / "config" / "VERSION"
+    try:
+        return version_file.read_text(encoding="utf-8").strip()
+    except OSError:
+        return "0.0.0"
+
+
+__version__ = _read_version()
 __author__ = "UCB Analytics"
 __description__ = "SAV to Dashboard Converter for PsO H-Biologics Tracker"
 

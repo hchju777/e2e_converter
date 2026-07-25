@@ -71,14 +71,20 @@ May', idx:16})
 body { font-family: 'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif; background: #f0f2f5; display: flex; min-height: 100vh; font-size: 13px; color: #222; }
 
 /* ── Sidebar ── */
-.sidebar { width: 220px; min-height: 100vh; background: #0f2252; flex-shrink: 0; display: flex; flex-direction: column; }
+/* 사이드바는 화면 상단에 고정(sticky)되고, 탭 목록(.sidebar-nav)만 중앙 콘텐츠와
+   독립적으로 스크롤된다. 로고 영역은 상단에 그대로 고정된다. */
+.sidebar { width: 220px; height: 100vh; background: #0f2252; flex-shrink: 0; display: flex; flex-direction: column; position: sticky; top: 0; align-self: flex-start; }
 .sidebar-logo { padding: 20px 18px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
 .logo-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
 .logo-box { width: 28px; height: 28px; background: #00b4d8; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #0f2252; flex-shrink: 0; }
 .logo-text { font-size: 10px; color: rgba(180,210,255,0.7); line-height: 1.4; }
 .sidebar-title { font-size: 11px; color: #fff; font-weight: 700; margin-top: 6px; line-height: 1.4; }
 .sidebar-subtitle { font-weight: 400; font-size: 10px; color: rgba(180,210,255,0.6); }
-.sidebar-nav { padding: 12px 0; flex: 1; }
+.sidebar-nav { padding: 12px 0; flex: 1; min-height: 0; overflow-y: auto; }
+.sidebar-nav::-webkit-scrollbar { width: 8px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 4px; }
+.sidebar-nav::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+.sidebar-nav::-webkit-scrollbar-track { background: transparent; }
 .nav-section-label { font-size: 9px; font-weight: 700; color: rgba(180,210,255,0.4); letter-spacing: 1px; text-transform: uppercase; padding: 10px 18px 4px; }
 .nav-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 18px; cursor: pointer; border-left: 3px solid transparent; transition: background 0.15s; }
 .nav-item:hover { background: rgba(255,255,255,0.06); }
@@ -105,6 +111,15 @@ body { font-family: 'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-se
 .tab-btn.active { background: #1a3a7c; color: #fff; border-color: #1a3a7c; }
 .tab-btn:hover:not(.active) { background: #e8ecf5; color: #1a3a7c; }
 
+/* ── Unit(%) 토글 ── */
+/* 표의 % 지표 셀에는 .pct-cell 클래스를 부여하고, 페이지에 .show-unit이 켜졌을 때만
+   CSS로 '%'를 덧붙인다. 숫자 계산·차트 로직은 건드리지 않는다. */
+.unit-toggle { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border: 1px solid #d0d4dc; border-radius: 6px 6px 0 0; background: #f4f5f8; color: #444; font-size: 12px; font-weight: 500; cursor: pointer; user-select: none; white-space: nowrap; }
+.unit-toggle:hover { background: #e8ecf5; color: #1a3a7c; }
+.unit-toggle input { width: 13px; height: 13px; cursor: pointer; accent-color: #1a3a7c; margin: 0; }
+.unit-toggle.on { background: #1a3a7c; color: #fff; border-color: #1a3a7c; }
+.page-section.show-unit .pct-cell::after { content: '%'; }
+
 /* ── Wave Dropdown ── */
 .wave-wrap { position: relative; }
 .wave-trigger { height: 32px; border: 1px solid #d0d4dc; border-radius: 6px 6px 0 0; border-bottom-color: #fff; background: #f4f5f8; color: #444; padding: 0 28px 0 10px; font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px; user-select: none; min-width: 140px; }
@@ -128,6 +143,9 @@ body { font-family: 'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-se
 /* ── Slide Card ── */
 .slide-card { background: #fff; border: 1px solid #dde1ea; border-radius: 0 8px 8px 8px; overflow: hidden; margin-bottom: 16px; }
 .slide-download-row { display:flex; justify-content:flex-end; margin:0 0 7px; }
+/* 필터 바가 없는 장표(조사 설계 등)에서는 다운로드 행이 페이지 최상단에 오므로,
+   상단 고정 reload-bar(높이 36px)에 가려지지 않도록 아래로 내린다. */
+.page-section > .slide-download-row:first-child { margin-top: 36px; }
 .slide-download-btn { border:1px solid #b8c4d8; border-radius:5px; background:#fff; color:#1a3a7c; padding:6px 11px; font-size:11px; font-weight:700; cursor:pointer; box-shadow:0 1px 3px rgba(15,34,82,.08); }
 .slide-download-btn:hover { background:#eef3fb; border-color:#7890b8; }
 .slide-download-btn:disabled { opacity:.55; cursor:wait; }
@@ -173,10 +191,18 @@ tbody tr.tier-row td:first-child { background: #e8ecf5; color: #1a3a7c; font-wei
 .sum-row-wrap { display: flex; align-items: stretch; margin-bottom: 2px; }
 .sum-row-label { width: 110px; flex-shrink: 0; font-size: 9px; color: #4a6fa5; font-weight: 600; background: #ddeaf8; padding: 5px 8px; border-radius: 4px 0 0 4px; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.4; }
 .sum-row-cells { flex: 1; display: flex; background: #eef4fb; border-radius: 0 4px 4px 0; overflow: hidden; min-height: 30px; }
+/* 합계 행의 숫자도 왼쪽 라벨과 같은 높이에서 가운데에 오게 한다(라벨이 두 줄일 때 숫자만 위로 붙던 문제). */
+.sum-row-cells > div { display: flex; align-items: center; justify-content: center; }
 .chart-body { display: flex; margin-top: 4px; }
 .chart-legend { width: 110px; flex-shrink: 0; font-size: 9px; color: #555; padding-top: 16px; line-height: 1.5; }
-.chart-legend-item { display: flex; align-items: flex-start; gap: 5px; margin-bottom: 10px; }
-.chart-legend-icon { flex-shrink: 0; display: inline-block; margin-top: 2px; }
+/* 범례는 아이콘 열과 설명 열로 나눈 표처럼 배치한다. 아이콘 폭이 서로 달라도
+   (사각형 10px vs 선+원 32px) 설명 글의 시작 위치가 한 줄로 맞는다.
+   아이콘 열 폭은 범례마다 그 안에서 가장 넓은 아이콘에 맞춰 자동으로 정해진다. */
+/* align-content를 start로 두지 않으면 남는 높이가 행 사이에 배분돼 항목이 세로로 흩어진다. */
+.chart-legend { display: grid; grid-template-columns: auto 1fr; column-gap: 5px; row-gap: 10px;
+                align-items: start; align-content: start; }
+.chart-legend-item { display: contents; }
+.chart-legend-icon { justify-self: center; align-self: start; margin-top: 2px; }
 .chart-canvas-wrap { flex: 1; position: relative; height: 260px; }
 
 /* ── Brand Table p18-p23 ── */
@@ -615,47 +641,35 @@ tbody tr.tier-row td:first-child { background: #e8ecf5; color: #1a3a7c; font-wei
               <div class="overview-icon">🔍</div>
               <div class="overview-label-text">조사 대상</div>
             </div>
-            <div class="overview-content">
-              <div class="overview-item">400베드 이상의 종합병원에 근무하는 피부과 전문의</div>
-              <div class="overview-item">전문의 경력 5년 이상인 자</div>
-              <div class="overview-item">한 달에 50명 이상의 건선 환자를 진료 하는 자</div>
-            </div>
+            <div class="overview-content" id="ovTarget"></div>
           </div>
           <div class="overview-row">
             <div class="overview-label">
               <div class="overview-icon">📋</div>
               <div class="overview-label-text">표본 크기</div>
             </div>
-            <div class="overview-content">
-              <div class="overview-item">N = 35</div>
-            </div>
+            <div class="overview-content" id="ovSample"></div>
           </div>
           <div class="overview-row">
             <div class="overview-label">
               <div class="overview-icon">🗺️</div>
               <div class="overview-label-text">조사 지역</div>
             </div>
-            <div class="overview-content">
-              <div class="overview-item">전국</div>
-            </div>
+            <div class="overview-content" id="ovRegion"></div>
           </div>
           <div class="overview-row">
             <div class="overview-label">
               <div class="overview-icon">👥</div>
               <div class="overview-label-text">자료 수집<br>방법</div>
             </div>
-            <div class="overview-content">
-              <div class="overview-item">한국리서치 닥터 패널을 활용한 온라인 조사</div>
-            </div>
+            <div class="overview-content" id="ovMethod"></div>
           </div>
           <div class="overview-row">
             <div class="overview-label">
               <div class="overview-icon">📅</div>
               <div class="overview-label-text">실사 기간</div>
             </div>
-            <div class="overview-content">
-              <div class="overview-item">2026년 5월 4일 ~ 5월 12일</div>
-            </div>
+            <div class="overview-content" id="ovPeriod"></div>
           </div>
         </div>
       </div>
@@ -772,7 +786,7 @@ tbody tr.tier-row td:first-child { background: #e8ecf5; color: #1a3a7c; font-wei
                   <span style="width:8px;height:8px;border-radius:50%;background:#00c9a7;border:1.5px solid #fff;outline:1px solid #00c9a7;display:inline-block;"></span>
                   <span style="width:10px;height:2px;background:#00c9a7;display:inline-block;"></span>
                 </span>
-                <span style="margin-left:3px;">건선 환자 중<br>생물학적 제제<br>처방 비율</span>
+                <span>건선 환자 중<br>생물학적 제제<br>처방 비율</span>
               </div>
             </div>
             <div class="chart-canvas-wrap"><canvas id="p11Chart" role="img" aria-label="생물학적 제제 처방 비율 차트"></canvas></div>
@@ -866,7 +880,7 @@ tbody tr.tier-row td:first-child { background: #e8ecf5; color: #1a3a7c; font-wei
                   <span style="width:8px;height:8px;border-radius:50%;background:#00c9a7;border:1.5px solid #fff;outline:1px solid #00c9a7;display:inline-block;"></span>
                   <span style="width:10px;height:2px;background:#00c9a7;display:inline-block;"></span>
                 </span>
-                <span style="margin-left:3px;">건선 환자 중<br>생물학적 제제<br>처방 비율</span>
+                <span>건선 환자 중<br>생물학적 제제<br>처방 비율</span>
               </div>
             </div>
             <div class="chart-canvas-wrap"><canvas id="p11bChart" role="img" aria-label="생물학적 제제 처방 비율 차트"></canvas></div>
@@ -2629,11 +2643,61 @@ const PERIODS_ASC = [
 ];
 const PERIODS_DESC = [...PERIODS_ASC].reverse();
 const LATEST_IDX = 15;
+/* 조사 설계 페이지 값. 대시보드 생성 시 사용자 입력으로 교체된다(없으면 이 기본값 사용). */
+const OVERVIEW = {"target":["400베드 이상의 종합병원에 근무하는 피부과 전문의","전문의 경력 5년 이상인 자","한 달에 50명 이상의 건선 환자를 진료 하는 자"],"sample":"N = 35","region":"전국","method":"한국리서치 닥터 패널을 활용한 온라인 조사","fieldwork":"2026년 5월 4일 ~ 2026년 5월 12일"};
 
 /* ── 공통 유틸 ── */
 function fmt(v, pct) {
   if (v == null || isNaN(v)) return '-';
   return pct ? parseFloat(v).toFixed(1) : Math.round(v).toString();
+}
+
+/* 막대 조각이 글자보다 얇으면 라벨이 조각을 벗어나 잘리거나 서로 겹친다.
+   그런 조각의 라벨만 막대 위로 빼서 읽을 수 있게 한다. 값은 항상 표시한다.
+   여러 조각이 동시에 얇으면 아래쪽부터 한 층씩 올려 서로 겹치지 않게 한다. */
+const THIN_BAR_PX = 13;
+
+/* 맨 위 조각이 얇을 때만 라벨을 막대 위로 뺀다.
+   가운데 조각까지 위로 빼면 자기 조각에서 멀어져 어느 값인지 알 수 없으므로,
+   그런 조각은 칸을 조금 넘더라도 제자리(조각 가운데)에 그대로 둔다.
+
+   판단은 그려진 막대 좌표가 아니라 '원본 값 + y축'으로 한다. 차트를 처음 만드는
+   시점에는 다른 계열의 막대 좌표가 아직 없어 첫 화면만 위치가 틀어지기 때문이다. */
+function _liftedTopLabel(ctx) {
+  const scale = ctx.chart.scales.y;
+  if (!scale) return false;
+
+  let total = 0;
+  const segments = ctx.chart.data.datasets.map(dataset => {
+    if (dataset.type === 'line') return null;      // 꺾은선은 쌓이지 않는다
+    const value = Number(dataset.data[ctx.dataIndex]) || 0;
+    const segment = { from: total, to: total + value, value };
+    total += value;
+    return segment;
+  });
+
+  const mine = segments[ctx.datasetIndex];
+  if (!mine || mine.value <= 0) return false;
+  if (Math.abs(mine.to - total) > 1e-9) return false;   // 맨 위 조각이 아니다
+
+  const height = Math.abs(scale.getPixelForValue(mine.to) - scale.getPixelForValue(mine.from));
+  return height < THIN_BAR_PX;                          // 얇을 때만 위로 뺀다
+}
+
+function thinBarLabel(outsideColor, insideColor) {
+  return {
+    anchor: ctx => _liftedTopLabel(ctx) ? 'end' : 'center',
+    align:  ctx => _liftedTopLabel(ctx) ? 'top' : 'center',
+    offset: ctx => _liftedTopLabel(ctx) ? 2 : 0,
+    color:  ctx => _liftedTopLabel(ctx) ? outsideColor : insideColor,
+  };
+}
+
+/* Unit(%) 토글 상태 — 장표(page-section)별로 독립적으로 관리한다.
+   표는 CSS(.show-unit .pct-cell::after)로, 차트는 datalabel 포맷터가 이 값을 읽어 처리한다. */
+const UNIT_PCT = {};
+function pctSuffix(sectionId) {
+  return UNIT_PCT[sectionId] ? '%' : '';
 }
 
 function applyColClass(el, idx, vis, selectedWaves) {
@@ -2898,6 +2962,28 @@ function resetToDropzone() {
   document.getElementById('excelFileInput').value = '';
 }
 
+// 조사 설계 페이지를 OVERVIEW 값으로 렌더링한다.
+function renderOverview() {
+  const fill = (id, value) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = '';
+    const items = Array.isArray(value) ? value : [value];
+    items.forEach(text => {
+      if (text === undefined || text === null || String(text).trim() === '') return;
+      const item = document.createElement('div');
+      item.className = 'overview-item';
+      item.textContent = text;
+      el.appendChild(item);
+    });
+  };
+  fill('ovTarget', OVERVIEW.target);
+  fill('ovSample', OVERVIEW.sample);
+  fill('ovRegion', OVERVIEW.region);
+  fill('ovMethod', OVERVIEW.method);
+  fill('ovPeriod', OVERVIEW.fieldwork);
+}
+
 // 드래그앤드롭 이벤트
 window.addEventListener('DOMContentLoaded', () => {
   const dz  = document.getElementById('excelDropzone');
@@ -2914,6 +3000,7 @@ window.addEventListener('DOMContentLoaded', () => {
   dz.classList.add('hidden');
   document.getElementById('reloadBar').classList.add('visible');
   document.getElementById('loadedFileName').textContent = '📊 기본 데이터 (Apr. 2026)';
+  renderOverview();
   renderP5();
 });
 
@@ -3128,13 +3215,13 @@ function renderP12() {
       datasets: [
         { type:'bar', label:'유지(Maintain)', data:maintainV,
           backgroundColor:'#1a3a7c', stack:'s',
-          datalabels:{ anchor:'center', align:'center', color:'#fff', font:{size:9,weight:'700'}, formatter:v=>v.toFixed(1) } },
+          datalabels:{ ...thinBarLabel('#1a3a7c','#fff'), font:{size:9,weight:'700'}, formatter:v=>v.toFixed(1)+pctSuffix('p12') } },
         { type:'bar', label:'스위칭(Switching)', data:switchingV,
           backgroundColor:'#4a7cc4', stack:'s',
-          datalabels:{ anchor:'center', align:'center', color:'#fff', font:{size:9,weight:'700'}, formatter:v=>v.toFixed(1) } },
+          datalabels:{ ...thinBarLabel('#2c5a9e','#fff'), font:{size:9,weight:'700'}, formatter:v=>v.toFixed(1)+pctSuffix('p12') } },
         { type:'bar', label:'신환(Naïve)', data:naiveV,
           backgroundColor:'#9ab9de', stack:'s',
-          datalabels:{ anchor:'center', align:'center', color:'#1a3a7c', font:{size:9,weight:'700'}, formatter:v=>v.toFixed(1) } },
+          datalabels:{ ...thinBarLabel('#5f86b5','#1a3a7c'), font:{size:9,weight:'700'}, formatter:v=>v.toFixed(1)+pctSuffix('p12') } },
       ]
     },
     options: {
@@ -3144,7 +3231,7 @@ function renderP12() {
         x: { ticks:{font:{size:9},color:'#555'}, grid:{display:false} },
         y: { display:false, min:0, max:100, stacked:true },
       },
-      layout:{ padding:{top:16} },
+      layout:{ padding:{top:36} },
     },
     plugins:[ChartDataLabels],
   });
@@ -3166,6 +3253,7 @@ function renderP12() {
       const dynamic = parseFloat(td.rows[0][p.idx]) + parseFloat(td.rows[1][p.idx]);
       const td2 = document.createElement('td');
       td2.textContent = dynamic.toFixed(1);
+      td2.classList.add('pct-cell');
       applyColClass(td2, i, vis, p12Waves);
       tr.appendChild(td2);
     });
@@ -3262,13 +3350,13 @@ function renderP12B() {
       datasets: [
         { type:'bar', label:'유지(Maintain)', data:maintainV,
           backgroundColor:'#1a3a7c', stack:'s',
-          datalabels:{ anchor:'center', align:'center', color:'#fff', font:{size:9,weight:'700'}, formatter:v=>v.toFixed(1) } },
+          datalabels:{ ...thinBarLabel('#1a3a7c','#fff'), font:{size:9,weight:'700'}, formatter:v=>v.toFixed(1)+pctSuffix('p12b') } },
         { type:'bar', label:'스위칭(Switching)', data:switchingV,
           backgroundColor:'#4a7cc4', stack:'s',
-          datalabels:{ anchor:'center', align:'center', color:'#fff', font:{size:9,weight:'700'}, formatter:v=>v.toFixed(1) } },
+          datalabels:{ ...thinBarLabel('#2c5a9e','#fff'), font:{size:9,weight:'700'}, formatter:v=>v.toFixed(1)+pctSuffix('p12b') } },
         { type:'bar', label:'신환(Naïve)', data:naiveV,
           backgroundColor:'#9ab9de', stack:'s',
-          datalabels:{ anchor:'center', align:'center', color:'#1a3a7c', font:{size:9,weight:'700'}, formatter:v=>v.toFixed(1) } },
+          datalabels:{ ...thinBarLabel('#5f86b5','#1a3a7c'), font:{size:9,weight:'700'}, formatter:v=>v.toFixed(1)+pctSuffix('p12b') } },
       ]
     },
     options: {
@@ -3278,7 +3366,7 @@ function renderP12B() {
         x: { ticks:{font:{size:9},color:'#555'}, grid:{display:false} },
         y: { display:false, min:0, max:100, stacked:true },
       },
-      layout:{ padding:{top:16} },
+      layout:{ padding:{top:36} },
     },
     plugins:[ChartDataLabels],
   });
@@ -3340,10 +3428,10 @@ function renderP13() {
       datasets: [
         { type:'bar', label:'스위칭(Switching)', data:switchV,
           backgroundColor:'#4a7cc4', stack:'s',
-          datalabels:{ anchor:'center', align:'center', color:'#fff', font:{size:9,weight:'700'}, formatter:v=>v.toFixed(1) } },
+          datalabels:{ ...thinBarLabel('#2c5a9e','#fff'), font:{size:9,weight:'700'}, formatter:v=>v.toFixed(1)+pctSuffix('p13') } },
         { type:'bar', label:'신환(Naïve)', data:naiveV,
           backgroundColor:'#9ab9de', stack:'s',
-          datalabels:{ anchor:'center', align:'center', color:'#1a3a7c', font:{size:9,weight:'700'}, formatter:v=>v.toFixed(1) } },
+          datalabels:{ ...thinBarLabel('#5f86b5','#1a3a7c'), font:{size:9,weight:'700'}, formatter:v=>v.toFixed(1)+pctSuffix('p13') } },
       ]
     },
     options: {
@@ -3353,7 +3441,7 @@ function renderP13() {
         x: { ticks:{font:{size:9},color:'#555'}, grid:{display:false} },
         y: { display:false, min:0, max:100, stacked:true },
       },
-      layout:{ padding:{top:16} },
+      layout:{ padding:{top:36} },
     },
     plugins:[ChartDataLabels],
   });
@@ -3388,6 +3476,7 @@ function renderP13() {
         const td2 = document.createElement('td');
         const v = td[field][p.idx];
         td2.textContent = isPct ? parseFloat(v).toFixed(1) : Math.round(v);
+        if (isPct) td2.classList.add('pct-cell');
         applyColClass(td2, i, vis, p13Waves);
         tr.appendChild(td2);
       });
@@ -3436,9 +3525,9 @@ function buildBrandPage(pid, segKey) {
         type:'bar', label:brand,
         data: vis.map(p => parseFloat(d[brand][p.idx])),
         backgroundColor: BRAND_COLORS[brand], stack:'s',
-        datalabels:{ anchor:'center', align:'center', color:'#fff',
+        datalabels:{ ...thinBarLabel(BRAND_COLORS[brand],'#fff'),
           font:{size:8.5, weight:'700'},
-          formatter: v => v > 0 ? v.toFixed(1) : '',
+          formatter: v => v > 0 ? v.toFixed(1) + pctSuffix(pid) : '',
         }
       }))
     },
@@ -3449,7 +3538,7 @@ function buildBrandPage(pid, segKey) {
         x:{ ticks:{font:{size:9},color:'#555'}, grid:{display:false} },
         y:{ display:false, min:0, max:100, stacked:true },
       },
-      layout:{ padding:{top:20} },
+      layout:{ padding:{top:20} },   // 맨 위 조각 라벨을 막대 위로 뺄 공간
     },
     plugins:[ChartDataLabels],
   });
@@ -3497,8 +3586,10 @@ function renderP15() {
       const td2 = document.createElement('td');
       if (key === 'IL23') {
         td2.textContent = (100 - parseFloat(d['IL17_pct'][p.idx] || 0)).toFixed(1);
+        td2.classList.add('pct-cell');
       } else {
         td2.textContent = d[key] ? parseFloat(d[key][p.idx]).toFixed(1) : '-';
+        if (d[key]) td2.classList.add('pct-cell');
       }
       applyColClass(td2, i, vis, p15Waves);
       tr.appendChild(td2);
@@ -3587,9 +3678,9 @@ function renderBrandBanner(pid, segKey, filter, waves) {
         type:'bar', label:brand,
         data: vis.map(p => parseFloat(d[brand][p.idx])),
         backgroundColor: BRAND_COLORS[brand], stack:'s',
-        datalabels:{ anchor:'center', align:'center', color:'#fff',
+        datalabels:{ ...thinBarLabel(BRAND_COLORS[brand],'#fff'),
           font:{size:8.5, weight:'700'},
-          formatter: v => v > 0 ? v.toFixed(1) : '',
+          formatter: v => v > 0 ? v.toFixed(1) + pctSuffix(pid + 'b') : '',
         }
       }))
     },
@@ -3600,7 +3691,7 @@ function renderBrandBanner(pid, segKey, filter, waves) {
         x:{ ticks:{font:{size:9},color:'#555'}, grid:{display:false} },
         y:{ display:false, min:0, max:100, stacked:true },
       },
-      layout:{ padding:{top:20} },
+      layout:{ padding:{top:20} },   // 맨 위 조각 라벨을 막대 위로 뺄 공간
     },
     plugins:[ChartDataLabels],
   });
@@ -3676,9 +3767,9 @@ function renderSovPage(pid) {
         type:'bar', label:brand,
         data: vis.map(p => parseFloat(d[brand][p.idx])),
         backgroundColor: BRAND_COLORS[brand], stack:'s',
-        datalabels:{ anchor:'center', align:'center', color:'#fff',
+        datalabels:{ ...thinBarLabel(BRAND_COLORS[brand],'#fff'),
           font:{size:8.5, weight:'700'},
-          formatter: v => v > 0 ? v.toFixed(1) : '',
+          formatter: v => v > 0 ? v.toFixed(1) + pctSuffix(pid) : '',
         }
       }))
     },
@@ -3689,7 +3780,7 @@ function renderSovPage(pid) {
         x:{ ticks:{font:{size:9},color:'#555'}, grid:{display:false} },
         y:{ display:false, min:0, max:100, stacked:true },
       },
-      layout:{ padding:{top:20} },
+      layout:{ padding:{top:20} },   // 맨 위 조각 라벨을 막대 위로 뺄 공간
     },
     plugins:[ChartDataLabels],
   });
@@ -3773,9 +3864,9 @@ function renderSovBanner(pid, filter, waves) {
         type:'bar', label:brand,
         data: vis.map(p => parseFloat(d[brand][p.idx])),
         backgroundColor: BRAND_COLORS[brand], stack:'s',
-        datalabels:{ anchor:'center', align:'center', color:'#fff',
+        datalabels:{ ...thinBarLabel(BRAND_COLORS[brand],'#fff'),
           font:{size:8.5, weight:'700'},
-          formatter: v => v > 0 ? v.toFixed(1) : '',
+          formatter: v => v > 0 ? v.toFixed(1) + pctSuffix(pid + 'b') : '',
         }
       }))
     },
@@ -3786,7 +3877,7 @@ function renderSovBanner(pid, filter, waves) {
         x:{ ticks:{font:{size:9},color:'#555'}, grid:{display:false} },
         y:{ display:false, min:0, max:100, stacked:true },
       },
-      layout:{ padding:{top:20} },
+      layout:{ padding:{top:20} },   // 맨 위 조각 라벨을 막대 위로 뺄 공간
     },
     plugins:[ChartDataLabels],
   });
@@ -3885,6 +3976,7 @@ function renderBrandTable(pid, blockKey) {
         const td = document.createElement('td');
         const v = sd[brand][p.idx];
         td.textContent = v != null ? parseFloat(v).toFixed(1) : '-';
+        if (v != null) td.classList.add('pct-cell');
         applyColClass(td, i, vis, waves);
         tr.appendChild(td);
       });
@@ -3942,6 +4034,7 @@ function renderSovTable(pid, sovKey, areaKeys, areaLabels) {
         const td = document.createElement('td');
         const v = d[brand][p.idx];
         td.textContent = v != null ? parseFloat(v).toFixed(1) : '-';
+        if (v != null) td.classList.add('pct-cell');
         applyColClass(td, i, vis, waves);
         tr.appendChild(td);
       });
@@ -4053,6 +4146,7 @@ function renderP5() {
     vis.forEach((p, i) => {
       const td = document.createElement('td');
       td.textContent = fmt(rows[r.i][p.idx], r.pct);
+      if (r.pct) td.classList.add('pct-cell');
       applyColClass(td, i, vis, p5Waves);
       tr.appendChild(td);
     });
@@ -4179,6 +4273,7 @@ function renderP11() {
       vis.forEach((p, i) => {
         const td2 = document.createElement('td');
         td2.textContent = fmt(td.rows[ri][p.idx], isPct);
+        if (isPct) td2.classList.add('pct-cell');
         applyColClass(td2, i, vis, p11Waves);
         tr.appendChild(td2);
       });
@@ -4249,9 +4344,62 @@ function inlineComputedStyles(source, clone) {
   });
 }
 
+/* 저장 위치와 파일 이름을 사용자가 고르게 한다.
+   1) File System Access API를 지원하면(Chrome/Edge — Windows·macOS·Linux) 운영체제 저장 대화상자를 띄운다.
+   2) 지원하지 않으면(Firefox/Safari 등) 파일 이름만 입력받아 브라우저 기본 다운로드 폴더에 저장한다.
+
+   저장 대화상자는 사용자가 버튼을 누른 직후 몇 초 안에만 열 수 있다. 그래서 저장 위치를
+   '먼저' 고르고(pickSaveTarget), 파일이 준비되면 그때 쓴다(writeToTarget). */
+async function pickSaveTarget(suggestedName, mime, description) {
+  if (window.showSaveFilePicker) {
+    const extension = '.' + suggestedName.split('.').pop();
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName,
+        types: [{ description: description, accept: { [mime]: [extension] } }],
+      });
+      return { handle, name: suggestedName };
+    } catch (error) {
+      // 사용자가 대화상자에서 '취소'를 누른 경우에만 중단한다.
+      if (error && error.name === 'AbortError') return null;
+      // 그 밖의 오류(권한 제한, 미지원 환경 등)는 아래 폴백으로 저장한다.
+    }
+  }
+  const name = window.prompt('저장할 파일 이름을 입력하세요.\n(브라우저의 기본 다운로드 폴더에 저장됩니다)', suggestedName);
+  if (name === null) return null;
+  return { handle: null, name: (name.trim() || suggestedName) };
+}
+
+async function writeToTarget(target, blob) {
+  if (target.handle) {
+    const writable = await target.handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return true;
+  }
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = target.name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return true;
+}
+
 async function downloadSlideImage(pageSection, button) {
   const card = pageSection.querySelector('.slide-card');
   if (!card) throw new Error('저장할 장표를 찾을 수 없습니다.');
+  const pageNum = (card.querySelector('.page-num')?.textContent || pageSection.id.replace('page-', '')).trim();
+  const title = (card.querySelector('.slide-title')?.textContent || '장표').trim();
+  const safeTitle = title.replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, ' ').slice(0, 70);
+
+  // 저장 위치를 먼저 고른다. 이미지를 다 만든 뒤에 물으면 대화상자를 띄울 권한이
+  // 만료돼 기본 다운로드 폴더로 떨어질 수 있다.
+  const target = await pickSaveTarget(`PsO_${pageNum}_${safeTitle}.png`, 'image/png', '장표 이미지 (PNG)');
+  if (!target) return;
+
   const oldText = button.textContent;
   button.disabled = true;
   button.textContent = '이미지 생성 중...';
@@ -4260,13 +4408,9 @@ async function downloadSlideImage(pageSection, button) {
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const output = renderElementToCanvas(card, 2);
-    const pageNum = (card.querySelector('.page-num')?.textContent || pageSection.id.replace('page-', '')).trim();
-    const title = (card.querySelector('.slide-title')?.textContent || '장표').trim();
-    const safeTitle = title.replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, ' ').slice(0, 70);
-    const link = document.createElement('a');
-    link.download = `PsO_${pageNum}_${safeTitle}.png`;
-    link.href = output.toDataURL('image/png');
-    link.click();
+    const blob = await new Promise(resolve => output.toBlob(resolve, 'image/png'));
+    if (!blob) throw new Error('이미지를 만들지 못했습니다.');
+    await writeToTarget(target, blob);
   } finally {
     button.disabled = false;
     button.textContent = oldText;
@@ -4358,6 +4502,46 @@ function installSlideDownloadButtons() {
   });
 }
 
+/* 각 장표의 filter-bar에서 Wave 그룹 오른쪽에 Unit(%) 토글을 설치한다.
+   토글은 페이지별로 독립이며, 켜면 그 페이지 표의 % 지표 셀에만 '%'가 붙는다. */
+function installUnitToggles() {
+  document.querySelectorAll('.page-section .filter-bar').forEach(bar => {
+    if (bar.querySelector('.unit-toggle')) return;
+    const section = bar.closest('.page-section');
+    if (!section || !section.querySelector('table, canvas')) return;
+
+    const group = document.createElement('div');
+    group.className = 'filter-group';
+    const label = document.createElement('div');
+    label.className = 'filter-label';
+    label.textContent = 'Unit';
+    const toggle = document.createElement('label');
+    toggle.className = 'unit-toggle';
+    const box = document.createElement('input');
+    box.type = 'checkbox';
+    const text = document.createElement('span');
+    text.textContent = '% 표시';
+    toggle.append(box, text);
+    group.append(label, toggle);
+
+    const sectionId = section.id.replace(/^page-/, '');
+    box.addEventListener('change', () => {
+      UNIT_PCT[sectionId] = box.checked;
+      section.classList.toggle('show-unit', box.checked);   // 표: CSS로 % 부착
+      toggle.classList.toggle('on', box.checked);
+      // 차트: canvas에 그려지므로 datalabel을 다시 그린다.
+      section.querySelectorAll('canvas').forEach(canvas => {
+        const chart = (typeof Chart !== 'undefined') && Chart.getChart(canvas);
+        if (chart) chart.update();
+      });
+    });
+
+    // Wave 그룹 오른쪽(= filter-bar 맨 끝)에 배치한다.
+    bar.appendChild(document.createElement('div')).className = 'filter-divider';
+    bar.appendChild(group);
+  });
+}
+
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -4406,6 +4590,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
 /* 초기 렌더 */
 renderP5();
 installSlideDownloadButtons();
+installUnitToggles();
 </script>
 
 </script>
