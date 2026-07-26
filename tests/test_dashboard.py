@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 
+import json
 import tempfile
 
 from src.dashboard.build_dashboard import (
@@ -11,6 +12,7 @@ from src.dashboard.build_dashboard import (
     add_period,
     build_dashboard_from_history,
     clear_wave_data,
+    history_path,
     read_json_constant,
     read_overview,
     replace_json_constant,
@@ -134,6 +136,32 @@ class DashboardImageDownloadTests(unittest.TestCase):
         picker = html.index("const target = await pickSaveTarget(")
         render = html.index("const output = renderElementToCanvas(card, 2)")
         self.assertLess(picker, render, "저장 위치를 먼저 물어야 합니다")
+
+
+class HistoryPathTests(unittest.TestCase):
+    """CLI(calc)도 웹 화면과 같은 과거 데이터 엑셀을 쓴다."""
+
+    def test_resolves_against_the_sav_directory(self):
+        settings = {"sav_dir": "db", "history_filename": "UCB_20260518_180044 - (dummy).xlsx"}
+        path = history_path(settings)
+
+        self.assertEqual(path.parent.name, "db")
+        self.assertTrue(path.is_file())
+
+    def test_reports_a_missing_setting(self):
+        with self.assertRaisesRegex(FileNotFoundError, "history_filename"):
+            history_path({"sav_dir": "db"})
+
+    def test_reports_a_missing_file(self):
+        with self.assertRaisesRegex(FileNotFoundError, "찾을 수 없습니다"):
+            history_path({"sav_dir": "db", "history_filename": "없는파일.xlsx"})
+
+    def test_settings_file_declares_the_excel(self):
+        settings = json.loads(Path("config/settings.json").read_text(encoding="utf-8"))
+
+        self.assertIn("history_filename", settings)
+        self.assertIn("history_output", settings)
+        self.assertTrue(settings["history_output"].endswith(".xlsx"))
 
 
 class VerticalAlignmentTests(unittest.TestCase):

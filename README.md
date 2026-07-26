@@ -152,17 +152,18 @@ e2e_converter/
 | 사용 방식 | 필요한 입력 | `db` 폴더에 넣어야 하나? |
 |---|---|---|
 | 웹 화면(EXE 실행, `python main.py web`) | 과거 데이터 엑셀 + SAV | 아니요. 화면에서 업로드 |
-| `python main.py calc` | SAV | 예. `settings.json`의 `sav_dir`·`sav_filename`으로 찾음 |
+| `python main.py calc` | 과거 데이터 엑셀 + SAV | 예. `settings.json`의 `history_filename`·`sav_filename`으로 찾음 |
 | `python main.py sav-info` | SAV | 예. `db` 폴더를 검색 |
 
 > 웹 화면에서는 **과거 데이터 엑셀이 반드시 필요합니다.** 자세한 내용은 [3-2. 과거 데이터 엑셀과 SAV 변환](#3-2-과거-데이터-엑셀과-sav-변환)을 참고합니다.
 
-아래 두 명령을 사용할 때만 `db` 폴더에 SAV를 넣고, `config/settings.json`의 `sav_filename`을 실제 파일명과 맞춥니다. 자세한 내용은 [4. config 설명](#4-config-설명)을 참고합니다.
+아래 두 명령을 사용할 때만 `db` 폴더에 입력 파일을 넣고, `config/settings.json`의 파일명을 실제 파일명과 맞춥니다. 자세한 내용은 [4. config 설명](#4-config-설명)을 참고합니다.
 
 ```text
 e2e_converter/
 └── db/
-    ├── 설문데이터.SAV           # calc / sav-info 명령을 쓸 때만 필요
+    ├── 설문데이터.SAV              # calc / sav-info 명령을 쓸 때만 필요
+    ├── 과거데이터.xlsx             # calc 명령을 쓸 때만 필요
     └── PsO_dashboard_v4.html
 ```
 
@@ -424,32 +425,39 @@ HTML을 열면 왼쪽 메뉴에서 조사 설계, 건선 환자, 브랜드 처�
 | `spec_path` | 지표 계산 규칙이 들어 있는 CSV 경로. 일반 사용자는 변경하지 않음 |
 | `sav_dir` | SAV 파일이 있는 폴더. `calc`·`sav-info` 명령에서만 사용 |
 | `sav_filename` | 일괄 계산에서 읽을 SAV 파일명. 철자와 띄어쓰기가 실제 파일명과 같아야 함. `calc` 명령에서만 사용 |
+| `history_filename` | 일괄 계산에서 읽을 **과거 데이터 엑셀 파일명**. `sav_dir` 폴더 안에 있어야 함. `calc` 명령에서만 사용 |
 | `output_dir` | 일괄 계산 결과를 저장할 폴더 |
 | `output_filename` | 결과 CSV 파일명 |
+| `history_output` | 이번 차수가 더해진 **엑셀을 저장할 경로**. 다음 차수 입력으로 사용 |
 | `result_column` | 추가할 보고 차수. `26년 6차`와 같은 `NN년 N차` 형식이며 차수는 1~12 |
 | `dashboard_banners` | 응답자를 전체·지역·Tier별로 나누는 기준 |
 | `dashboard_template` | 대시보드의 화면 구성(레이아웃·스크립트)을 담은 기준 HTML 경로. EXE 빌드 시에도 이 값을 사용함. 웹 변환에서는 이 파일의 지표 값을 쓰지 않고 엑셀 값으로 새로 채움 |
 | `dashboard_output` | 새 차수가 추가된 HTML을 저장할 경로 |
 
-웹 화면에서는 SAV를 직접 업로드하므로 `sav_dir`과 `sav_filename`을 **전혀 사용하지 않습니다**. 두 값이 실제로 없는 파일을 가리켜도 웹 변환은 정상 동작합니다. 반면 `spec_path`, `dashboard_banners`, `dashboard_template`은 웹 변환에도 사용되므로 올바르게 지정되어 있어야 합니다.
+웹 화면에서는 두 파일을 직접 업로드하므로 `sav_dir`·`sav_filename`·`history_filename`·`history_output`을 **전혀 사용하지 않습니다**. 이 값들이 없는 파일을 가리켜도 웹 변환은 정상 동작합니다. 반면 `spec_path`, `dashboard_banners`, `dashboard_template`은 웹 변환에도 사용되므로 올바르게 지정되어 있어야 합니다.
 
 ### 4-3. 새 조사 차수로 변경할 때
 
-보통 다음 네 값을 함께 변경합니다.
+`python main.py calc`로 일괄 계산할 때는 보통 다음 값을 함께 변경합니다.
 
 ```json
 "sav_filename": "새로운파일.SAV",
+"history_filename": "PsO_history_26년6차.xlsx",
 "output_filename": "results_26년7차.csv",
+"history_output": "results/PsO_history_26년7차.xlsx",
 "result_column": "26년 7차",
 "dashboard_output": "results/PsO_dashboard_26년7차.html"
 ```
+
+`history_filename`에는 **지난 차수에서 만들어진 엑셀**을 넣습니다. 위 예시처럼 26년 7차를 계산한다면, 26년 6차 계산 결과로 나온 `PsO_history_26년6차.xlsx`를 `db` 폴더에 옮겨 두고 그 이름을 적습니다.
 
 주의 사항:
 
 - JSON의 문자열은 큰따옴표(`"`)로 감쌉니다.
 - 각 항목 뒤의 쉼표를 실수로 지우지 않습니다.
 - Windows 경로 대신 `db/파일명.html`처럼 프로젝트 기준 상대경로를 사용합니다.
-- 기준 HTML에 같은 차수가 이미 있으면 중복 차수 오류가 발생합니다.
+- 엑셀에 같은 차수가 이미 있으면 중복 차수 오류가 발생합니다.
+- `result_column`이 엑셀의 마지막 차수보다 앞서면 오류가 발생합니다.
 
 ### 4-4. dashboard_banners
 
@@ -503,7 +511,7 @@ HTML을 열면 왼쪽 메뉴에서 조사 설계, 건선 환자, 브랜드 처�
 | 명령 | 역할 |
 |---|---|
 | `python main.py web` | 웹 변환 화면 실행. SAV를 화면에서 업로드하므로 `db` 폴더에 SAV가 없어도 됨 |
-| `python main.py calc --banner` | `settings.json`의 SAV를 계산해 CSV와 HTML을 `results`에 저장. `db` 폴더에 SAV 필요 |
+| `python main.py calc --banner` | `settings.json`의 엑셀과 SAV로 CSV·HTML·엑셀을 `results`에 저장. `db` 폴더에 두 파일 필요 |
 | `python main.py sav-info` | `db` 폴더의 SAV 응답자 수, 변수 수와 앞부분 데이터 확인. `db` 폴더에 SAV 필요 |
 | `python main.py -h` | 명령 도움말 표시 |
 
@@ -513,7 +521,15 @@ HTML을 열면 왼쪽 메뉴에서 조사 설계, 건선 환자, 브랜드 처�
 python main.py calc --banner
 ```
 
-이 명령은 `settings.json`의 `sav_filename`, `result_column`, 출력 파일명을 사용합니다. PDF와 PPTX 다운로드가 필요하면 웹 화면을 사용합니다.
+웹 화면과 **같은 방식**으로 동작합니다. `settings.json`의 `history_filename`(과거 데이터 엑셀)과 `sav_filename`(이번 차수 SAV)을 읽어 다음 세 가지를 만듭니다.
+
+| 결과 | 저장 위치를 정하는 설정 |
+|---|---|
+| HTML 대시보드(전체 차수) | `dashboard_output` |
+| **엑셀(이번 차수 추가)** | `history_output` |
+| CSV 계산 결과 | `output_dir` + `output_filename` |
+
+두 파일 모두 `sav_dir`(기본값 `db`) 폴더에 있어야 합니다. PDF와 PPTX가 필요하면 웹 화면을 사용합니다.
 
 #### SAV 파일 정보 확인
 
@@ -665,6 +681,7 @@ e2e_converter/
 - 지난 차수 값은 **엑셀이 정본**이 되고, 대시보드 HTML에는 값을 저장하지 않습니다.
 - 결과로 **이번 차수가 추가된 엑셀**을 함께 내려받아 다음 달 입력으로 씁니다.
 - 이전 방식(기준 HTML에 차수를 계속 덧붙이는 방식)에서는 기준 HTML을 매번 교체하지 않으면 과거 차수가 사라졌는데, 그 문제가 없어졌습니다.
+- `python main.py calc`도 같은 방식으로 동작합니다. `settings.json`에 `history_filename`·`history_output`을 추가해 엑셀을 읽고 갱신된 엑셀을 남깁니다.
 
 **입력 화면**
 

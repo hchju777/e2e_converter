@@ -12,6 +12,12 @@ from src.utils.banner import (
     filter_banner_data,
     validate_banner_configs,
 )
+from src.utils.excel_history import (
+    check_new_wave,
+    read_history,
+    validate_against_spec,
+    write_history,
+)
 from src.utils.logger import get_logger
 from src.utils.read_sav import read_sav_files
 
@@ -355,11 +361,36 @@ def build_dashboard(
     return output
 
 
+def history_path(settings: dict) -> Path:
+    """설정에 적힌 과거 데이터 엑셀의 경로를 돌려준다."""
+    filename = settings.get("history_filename")
+    if not filename:
+        raise FileNotFoundError(
+            "config/settings.json에 history_filename(과거 데이터 엑셀 파일명)이 없습니다."
+        )
+    path = Path(settings.get("sav_dir", "db")) / filename
+    if not path.is_file():
+        raise FileNotFoundError(f"과거 데이터 엑셀을 찾을 수 없습니다: {path}")
+    return path
+
+
 def main():
     try:
         logger.info("🚀 PsO 대시보드 생성을 시작합니다")
         logger.info("⚙️ 설정 파일 읽는 중: config/settings.json")
         settings = load_settings()
+
+        specs = load_spec(settings["spec_path"], "전체")
+        period = settings["result_column"]
+        banner_configs = settings["dashboard_banners"]
+        logger.info("📋 지표 스펙 로드 완료: %d개", len(specs))
+
+        # 과거 차수는 엑셀이 정본이다. 웹 화면과 같은 방식으로 전체 차수를 다시 만든다.
+        excel = history_path(settings)
+        logger.info("📗 과거 데이터 엑셀 읽는 중: %s", excel)
+        history = read_history(excel)
+        validate_against_spec(history, [spec.question for spec in specs])
+        period = check_new_wave(history, period)
 
         logger.info("📂 SAV 파일 읽는 중: %s/%s", settings["sav_dir"], settings.get("sav_filename"))
         files = read_sav_files(settings["sav_dir"], settings.get("sav_filename"))
@@ -368,17 +399,25 @@ def main():
         sav_path, (df, _meta) = next(iter(files.items()))
         logger.info("📊 SAV 로드 완료: %s (응답자 %d명, 변수 %d개)", sav_path, len(df), len(df.columns))
 
-        specs = load_spec(settings["spec_path"], "전체")
-        period = settings["result_column"]
-        banner_configs = settings["dashboard_banners"]
-        logger.info("📋 지표 스펙 로드 완료: %d개", len(specs))
-
         logger.info("🎯 배너 필터 설정 로드 완료: %d개", len(banner_configs))
         banner_values = calculate_banner_values(df, specs, period, banner_configs)
-        output = build_dashboard(
-            settings["dashboard_template"], settings["dashboard_output"], period, banner_values
+
+        periods = history.waves + [period]
+        period_values = dict(history.values)
+        period_values[period] = banner_values
+        output = build_dashboard_from_history(
+            settings["dashboard_template"], settings["dashboard_output"], periods, period_values
         )
-        logger.info("💾 대시보드 저장 완료: %s", output)
+        logger.info("💾 대시보드 저장 완료: %s (%d개 차수)", output, len(periods))
+
+        # 다음 차수 입력으로 쓸 수 있도록 이번 차수를 더한 엑셀도 남긴다.
+        history_out = settings.get("history_output")
+        if history_out:
+            saved = write_history(excel, history_out, period, banner_values)
+            logger.info("💾 과거 데이터 엑셀 저장 완료: %s", saved)
+        else:
+            logger.warning("⚠️ history_output이 없어 갱신된 엑셀을 저장하지 않았습니다")
+
         logger.info("🎉 모든 작업이 성공적으로 완료되었습니다")
     except Exception:
         logger.exception("💥 대시보드 생성 중 오류가 발생했습니다")

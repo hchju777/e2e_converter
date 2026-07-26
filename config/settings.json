@@ -2,8 +2,10 @@
     "spec_path": "config/metric_spec.csv",
     "sav_dir": "db",
     "sav_filename": "(0709)피부과(6차)_v2.0.SAV",
+    "history_filename": "UCB_20260518_180044 - (dummy).xlsx",
     "output_dir": "results",
     "output_filename": "results_26년6차.csv",
+    "history_output": "results/PsO_history_26년6차.xlsx",
     "result_column": "26년 6차",
     "dashboard_banners": [
         {"name": "전체"},
