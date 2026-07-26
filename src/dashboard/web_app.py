@@ -6,6 +6,7 @@ import json
 import os
 import re
 import signal
+import socket
 import tempfile
 import threading
 import time
@@ -384,9 +385,16 @@ button.onclick=async()=>{
 </script></body></html>"""
 
 
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
 def bundled_resource(relative_path: str) -> Path:
-    """개발 환경 또는 PyInstaller EXE 내부의 리소스 경로를 반환한다."""
-    base_dir = Path(getattr(sys, "_MEIPASS", Path.cwd()))
+    """개발 환경 또는 PyInstaller EXE 내부의 리소스 경로를 반환한다.
+
+    현재 폴더가 아니라 프로젝트 폴더를 기준으로 찾는다. 어느 위치에서
+    python main.py web을 실행하든 설정과 템플릿을 찾을 수 있어야 한다.
+    """
+    base_dir = Path(getattr(sys, "_MEIPASS", _PROJECT_ROOT))
     return base_dir / relative_path
 
 
@@ -847,14 +855,53 @@ def _graceful_shutdown(server: ConverterServer, timeout: float = 60.0) -> None:
     logger.info("✅ 변환기를 안전하게 종료했습니다")
 
 
+def _open_browser(url: str) -> None:
+    """기본 브라우저를 연다. 실패하면 직접 주소를 열도록 크게 안내한다.
+
+    브라우저 자동 실행은 PC 설정에 따라 조용히 실패할 수 있는데, 그때 아무 안내가
+    없으면 서버가 떠 있는데도 사용자는 아무것도 볼 수 없다.
+    """
+    try:
+        if webbrowser.open(url):
+            return
+    except Exception as error:  # noqa: BLE001 - 어떤 실패든 안내로 대체한다
+        logger.debug("브라우저 실행 중 오류: %s", error)
+    logger.warning("⚠️ 브라우저를 자동으로 열지 못했습니다.")
+    logger.warning("👉 브라우저 주소창에 직접 입력해 주세요: %s", url)
+
+
+def _port_in_use(host: str, port: int) -> bool:
+    """이미 무언가 듣고 있는 포트인지 확인한다.
+
+    Windows에서는 포트가 사용 중이어도 두 번째 서버가 그대로 떠버려서, 새로 띄운 줄
+    알았는데 예전 인스턴스가 응답하는 일이 생긴다. 그래서 미리 확인해 막는다.
+    """
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.settimeout(0.3)
+        return probe.connect_ex((host, port)) == 0
+
+
 def main():
     settings = load_web_settings()
-    server = ConverterServer((HOST, DEFAULT_PORT), ConverterHandler, settings)
+    if _port_in_use(HOST, DEFAULT_PORT):
+        logger.error("💥 이미 변환기가 실행 중입니다 (포트 %d 사용 중)", DEFAULT_PORT)
+        logger.error("↳ 이전에 열어 둔 검은색 창을 모두 닫은 뒤 다시 실행해 주세요.")
+        logger.error("↳ 그대로 쓰시려면 브라우저에서 http://%s:%d/ 로 접속하세요.", HOST, DEFAULT_PORT)
+        raise SystemExit(1)
+
+    try:
+        server = ConverterServer((HOST, DEFAULT_PORT), ConverterHandler, settings)
+    except OSError as error:
+        logger.error("💥 포트 %d를 사용할 수 없습니다: %s", DEFAULT_PORT, error)
+        logger.error("↳ 이전에 실행한 변환기 창이 남아 있으면 모두 닫고 다시 실행해 주세요.")
+        raise SystemExit(1)
+
     url = f"http://{HOST}:{server.server_port}/"
     logger.info("🚀 PsO 변환기 v%s 실행: %s", get_app_version(), url)
     logger.info("🔒 SAV 파일은 이 PC 안에서만 처리됩니다")
+    logger.info("🌐 브라우저가 열리지 않으면 이 주소로 접속하세요: %s", url)
     if os.environ.get("PSO_NO_BROWSER") != "1":
-        threading.Timer(0.8, lambda: webbrowser.open(url)).start()
+        threading.Timer(0.8, lambda: _open_browser(url)).start()
 
     shutdown_event = threading.Event()
     _install_shutdown_handlers(shutdown_event)

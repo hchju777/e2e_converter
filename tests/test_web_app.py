@@ -1,10 +1,18 @@
 import base64
 import json
+import os
+import socket
+import tempfile
 import unittest
+import webbrowser
 from pathlib import Path
+from unittest import mock
 
+from src.dashboard import web_app
 from src.dashboard.web_app import (
     APP_HTML,
+    _open_browser,
+    _port_in_use,
     format_fieldwork,
     get_app_version,
     load_web_settings,
@@ -30,6 +38,42 @@ class WebSettingsTests(unittest.TestCase):
 
         self.assertEqual(Path(settings["dashboard_template"]).name, "PsO_dashboard_v4.html")
         self.assertTrue(Path(settings["dashboard_template"]).is_file())
+
+    def test_resources_are_found_from_any_working_directory(self):
+        """어느 폴더에서 python main.py web을 실행해도 설정을 찾아야 한다."""
+        original = os.getcwd()
+        os.chdir(tempfile.gettempdir())
+        try:
+            settings = load_web_settings()
+            self.assertTrue(Path(settings["dashboard_template"]).is_file())
+            self.assertRegex(get_app_version(), r"^\d+\.\d+\.\d+$")
+        finally:
+            os.chdir(original)
+
+
+class StartupGuardTests(unittest.TestCase):
+    def test_detects_a_port_already_in_use(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
+            listener.bind(("127.0.0.1", 0))
+            listener.listen(1)
+            port = listener.getsockname()[1]
+
+            self.assertTrue(_port_in_use("127.0.0.1", port))
+
+        self.assertFalse(_port_in_use("127.0.0.1", port))
+
+    def test_tells_the_user_where_to_go_when_the_browser_fails(self):
+        messages = []
+        with mock.patch.object(webbrowser, "open", return_value=False), \
+             mock.patch.object(web_app.logger, "warning", lambda msg, *a: messages.append(msg % a if a else msg)):
+            _open_browser("http://127.0.0.1:8765/")
+
+        self.assertTrue(any("자동으로 열지 못했" in m for m in messages))
+        self.assertTrue(any("http://127.0.0.1:8765/" in m for m in messages))
+
+    def test_browser_errors_do_not_crash_startup(self):
+        with mock.patch.object(webbrowser, "open", side_effect=RuntimeError("no browser")):
+            _open_browser("http://127.0.0.1:8765/")   # 예외가 밖으로 나오면 실패
 
 
 class FieldworkFormatTests(unittest.TestCase):
