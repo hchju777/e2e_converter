@@ -13,6 +13,7 @@ from src.dashboard.build_dashboard import (
     build_dashboard_from_history,
     clear_wave_data,
     history_path,
+    overview_from_settings,
     read_json_constant,
     read_overview,
     replace_json_constant,
@@ -164,6 +165,47 @@ class HistoryPathTests(unittest.TestCase):
         self.assertTrue(settings["history_output"].endswith(".xlsx"))
 
 
+class OverviewFromSettingsTests(unittest.TestCase):
+    """조사 설계도 웹 화면처럼 config로 지정할 수 있어야 한다."""
+
+    BASE = {
+        "target": ["A", "", "  B "],
+        "sample": " N = 1 ",
+        "region": "서울",
+        "method": "온라인",
+        "fieldwork_start": "2025-01-01",
+        "fieldwork_end": "2026-05-12",
+    }
+
+    def test_builds_dashboard_overview(self):
+        overview = overview_from_settings({"overview": self.BASE})
+
+        self.assertEqual(overview["target"], ["A", "B"])       # 빈 줄과 앞뒤 공백은 정리한다
+        self.assertEqual(overview["sample"], "N = 1")
+        self.assertEqual(overview["fieldwork"], "2025년 1월 1일 ~ 2026년 5월 12일")
+
+    def test_missing_block_falls_back_to_the_template(self):
+        self.assertIsNone(overview_from_settings({}))
+
+    def test_requires_both_dates(self):
+        broken = dict(self.BASE, fieldwork_end=None)
+        with self.assertRaisesRegex(ValueError, "fieldwork_start와 fieldwork_end"):
+            overview_from_settings({"overview": broken})
+
+    def test_rejects_reversed_and_malformed_dates(self):
+        with self.assertRaisesRegex(ValueError, "빠를 수 없"):
+            overview_from_settings({"overview": dict(self.BASE, fieldwork_start="2026-06-01")})
+        with self.assertRaisesRegex(ValueError, "형식"):
+            overview_from_settings({"overview": dict(self.BASE, fieldwork_start="2025/01/01")})
+
+    def test_settings_file_has_the_overview_block(self):
+        settings = json.loads(Path("config/settings.json").read_text(encoding="utf-8"))
+
+        self.assertIn("overview", settings)
+        for key in ("target", "sample", "region", "method", "fieldwork_start", "fieldwork_end"):
+            self.assertIn(key, settings["overview"])
+
+
 class VerticalAlignmentTests(unittest.TestCase):
     """값이 칸 위쪽에 붙지 않고 세로 가운데에 오도록 한다."""
 
@@ -187,18 +229,44 @@ class ThinBarLabelTests(unittest.TestCase):
 
     def test_only_the_top_segment_is_lifted(self):
         self.assertIn("function thinBarLabel(outsideColor, insideColor)", self.html)
-        self.assertIn("anchor: ctx => _liftedTopLabel(ctx) ? 'end' : 'center'", self.html)
+        self.assertIn("anchor: ctx => _labelPlacement(ctx).anchor", self.html)
         # 맨 위 조각이 아니면 위로 빼지 않는다.
-        self.assertIn("if (Math.abs(mine.to - total) > 1e-9) return false;", self.html)
+        self.assertIn("if (Math.abs(mine.to - total) > 1e-9) return null;", self.html)
 
     def test_middle_segments_keep_their_place(self):
         """가운데 조각까지 위로 빼면 자기 조각에서 멀어져 어느 값인지 알 수 없다."""
-        self.assertNotIn("THIN_LABEL_STEP", self.html)   # 층 쌓기 방식은 쓰지 않는다
-        self.assertIn("offset: ctx => _liftedTopLabel(ctx) ? 2 : 0", self.html)
+        self.assertIn("return { anchor: 'center', align: 'center', offset: 0 };", self.html)
+        self.assertIn("그런 조각은 칸을 조금 넘더라도 제자리", self.html)
 
     def test_applied_to_every_stacked_bar_chart(self):
         # 환자 타입(p12·p12b·p13)뿐 아니라 브랜드·SoV 차트에도 적용한다.
         self.assertEqual(self.html.count("...thinBarLabel("), 12)
+
+    def test_lifted_label_keeps_clear_of_the_one_below(self):
+        # 바로 아래 조각의 라벨은 제자리에 남으므로 그와 겹치지 않을 만큼 올려야 한다.
+        self.assertIn("const LABEL_MIN_GAP = 11;", self.html)
+        self.assertIn("if (gap + offset < LABEL_MIN_GAP) offset = LABEL_MIN_GAP - gap;", self.html)
+
+
+class OverflowLabelTests(unittest.TestCase):
+    """합계가 100%를 넘으면 막대가 화면 위로 솟아 라벨이 통째로 사라진다."""
+
+    def setUp(self):
+        self.html = Path("db/PsO_dashboard_v4.html").read_text(encoding="utf-8")
+
+    def test_treats_the_axis_max_as_a_ceiling(self):
+        self.assertIn("function _overflowLabel(", self.html)
+        self.assertIn("const ceiling = scale.max;", self.html)
+        self.assertIn("보이는 구간의 가운데에 놓는다", self.html)
+
+    def test_tolerates_floating_point_sums(self):
+        """96.72 + 2.51 + 0.77 처럼 딱 100인 값도 소수점 오차로 100을 넘길 수 있다."""
+        self.assertIn("if (!(total > ceiling + 0.5)) return null;", self.html)
+
+    def test_overflow_labels_are_readable_on_any_background(self):
+        # 원래 조각이 아닌 다른 색 위에 놓이므로 흰 글자 + 어두운 테두리로 그린다.
+        self.assertIn("placement.overflow) return '#fff'", self.html)
+        self.assertIn("textStrokeColor", self.html)
 
     def test_chart_reserves_room_above_bars(self):
         # 막대 위로 뺀 라벨이 캔버스 밖으로 잘리지 않도록 위쪽 여백을 넓힌다.
@@ -241,7 +309,7 @@ class ChartLabelTests(unittest.TestCase):
 
     def test_thin_top_segment_is_lifted_above_the_bar(self):
         self.assertIn("function thinBarLabel(", self.html)
-        self.assertIn("align:  ctx => _liftedTopLabel(ctx) ? 'top' : 'center'", self.html)
+        self.assertIn("return { anchor: 'end', align: 'top', offset: lifted.offset, outside: true };", self.html)
 
     def test_position_comes_from_values_not_drawn_bars(self):
         """막대 좌표로 계산하면 차트를 처음 그릴 때만 위치가 틀린다."""

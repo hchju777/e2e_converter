@@ -27,6 +27,7 @@ import pyreadstat
 from src.dashboard.build_dashboard import (
     _period_label,
     build_dashboard_from_history,
+    format_fieldwork,
     read_overview,
 )
 from src.dashboard.generate_pdf import generate_pdf
@@ -411,24 +412,6 @@ def load_web_settings() -> dict:
     # PyInstaller spec도 이 설정값의 상대경로를 그대로 보존해 번들에 포함한다.
     settings["dashboard_template"] = str(bundled_resource(settings["dashboard_template"]))
     return settings
-
-
-def format_fieldwork(start: str, end: str) -> str:
-    """'YYYY-MM-DD' 시작/종료 날짜를 '2025년 1월 1일 ~ 2026년 7월 26일' 형식으로 변환한다.
-
-    실사 기간이 해를 넘길 수 있으므로 시작일과 종료일 모두 연도를 표기한다.
-    """
-    try:
-        start_date = date.fromisoformat(start)
-        end_date = date.fromisoformat(end)
-    except (TypeError, ValueError):
-        raise ValueError("실사 기간 날짜 형식이 올바르지 않습니다.")
-    if end_date < start_date:
-        raise ValueError("실사 종료일은 시작일보다 빠를 수 없습니다.")
-    return (
-        f"{start_date.year}년 {start_date.month}월 {start_date.day}일 "
-        f"~ {end_date.year}년 {end_date.month}월 {end_date.day}일"
-    )
 
 
 def parse_overview_input(raw_header: str | None) -> dict | None:

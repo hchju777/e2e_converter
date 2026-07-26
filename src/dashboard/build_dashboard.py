@@ -2,6 +2,7 @@
 
 import json
 import re
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
@@ -234,6 +235,54 @@ def read_overview(template_path: str) -> dict:
     return read_json_constant(html, "OVERVIEW")
 
 
+def format_fieldwork(start: str, end: str) -> str:
+    """'YYYY-MM-DD' 시작/종료 날짜를 '2025년 1월 1일 ~ 2026년 7월 26일' 형식으로 변환한다.
+
+    실사 기간이 해를 넘길 수 있으므로 시작일과 종료일 모두 연도를 표기한다.
+    """
+    try:
+        start_date = date.fromisoformat(start)
+        end_date = date.fromisoformat(end)
+    except (TypeError, ValueError):
+        raise ValueError("실사 기간 날짜 형식이 올바르지 않습니다.")
+    if end_date < start_date:
+        raise ValueError("실사 종료일은 시작일보다 빠를 수 없습니다.")
+    return (
+        f"{start_date.year}년 {start_date.month}월 {start_date.day}일 "
+        f"~ {end_date.year}년 {end_date.month}월 {end_date.day}일"
+    )
+
+
+def overview_from_settings(settings: dict) -> dict | None:
+    """config의 overview 항목을 대시보드 OVERVIEW 형식으로 바꾼다.
+
+    항목이 없으면 None을 돌려주고, 그때는 기준 HTML에 적힌 값을 그대로 쓴다.
+    웹 화면에서 입력받는 값과 같은 항목을 config로도 지정할 수 있게 한 것이다.
+    """
+    raw = settings.get("overview")
+    if not raw:
+        return None
+
+    target = raw.get("target", [])
+    if isinstance(target, str):
+        target = [target]
+    target = [str(item).strip() for item in target if str(item).strip()]
+
+    start, end = raw.get("fieldwork_start"), raw.get("fieldwork_end")
+    if not start or not end:
+        raise ValueError(
+            "config의 overview에 fieldwork_start와 fieldwork_end를 모두 적어 주세요 (예: 2026-05-04)."
+        )
+
+    return {
+        "target": target,
+        "sample": str(raw.get("sample", "")).strip(),
+        "region": str(raw.get("region", "")).strip(),
+        "method": str(raw.get("method", "")).strip(),
+        "fieldwork": format_fieldwork(start, end),
+    }
+
+
 DATA_CONSTANTS = [
     "P5_RESP", "P5_DATA", "P11_DATA", "P11B_DATA", "P12_DATA", "P12B_DATA",
     "P13_DATA", "BRAND_DATA", "BRAND_BANNER_DATA", "BRAND_TABLE_DATA",
@@ -402,11 +451,18 @@ def main():
         logger.info("🎯 배너 필터 설정 로드 완료: %d개", len(banner_configs))
         banner_values = calculate_banner_values(df, specs, period, banner_configs)
 
+        overview = overview_from_settings(settings)
+        if overview:
+            logger.info("📝 조사 설계 값 적용: 실사 기간 %s", overview["fieldwork"])
+        else:
+            logger.info("📝 config에 overview가 없어 기준 HTML의 조사 설계를 그대로 씁니다")
+
         periods = history.waves + [period]
         period_values = dict(history.values)
         period_values[period] = banner_values
         output = build_dashboard_from_history(
-            settings["dashboard_template"], settings["dashboard_output"], periods, period_values
+            settings["dashboard_template"], settings["dashboard_output"],
+            periods, period_values, overview,
         )
         logger.info("💾 대시보드 저장 완료: %s (%d개 차수)", output, len(periods))
 

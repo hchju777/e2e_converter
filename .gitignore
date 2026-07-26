@@ -10,3 +10,5 @@ logs/
 .DS_Store
 .env
 .vscode/settings.json
+db/*.SAV
+db/*.xlsx
